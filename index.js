@@ -7,8 +7,8 @@ const User = require('./models/User');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const SECRET_KEY = 'spaziovitale_super_secret_key_2026';
-const MONGODB_URI = 'mongodb+srv://Cris87:Janis724@cluster0.r79rn7k.mongodb.net/spaziovitale?appName=Cluster0';
+const SECRET_KEY = process.env.JWT_SECRET || 'spaziovitale_super_secret_key_2026';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://Cris87:Janis724@cluster0.r79rn7k.mongodb.net/spaziovitale?appName=Cluster0';
 
 app.use(cors());
 app.use(express.json());
