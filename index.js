@@ -43,6 +43,25 @@ mongoose.connect(MONGODB_URI)
       console.error('Error seeding admin user:', seedError);
     }
 
+    // Auto-seed designer user on startup
+    try {
+      const designerEmail = 'crisaguirredev@gmail.com';
+      const existingDesigner = await User.findOne({ email: designerEmail });
+      if (!existingDesigner) {
+        const hashedPassword = await bcrypt.hash('D3sign@2026$', 10);
+        await User.create({
+          email: designerEmail,
+          password: hashedPassword,
+          role: 'designer'
+        });
+        console.log(`Designer user ${designerEmail} seeded successfully.`);
+      } else {
+        console.log(`Designer user ${designerEmail} already exists in DB.`);
+      }
+    } catch (seedError) {
+      console.error('Error seeding designer user:', seedError);
+    }
+
     // Auto-seed global config
     try {
       const existingConfig = await Config.findOne({ key: 'global' });
