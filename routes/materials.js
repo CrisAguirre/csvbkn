@@ -44,6 +44,60 @@ router.get('/', async (req, res) => {
   }
 });
 
+// POST /api/materials/bulk-upsert - Crear o actualizar por code + provider (solo admin)
+router.post('/bulk-upsert', requireAdmin, async (req, res) => {
+  try {
+    const { materials, replaceProvider } = req.body;
+    if (!Array.isArray(materials) || materials.length === 0) {
+      return res.status(400).json({ success: false, message: 'Se requiere un array de materiales.' });
+    }
+
+    if (replaceProvider) {
+      await Material.deleteMany({ provider: replaceProvider });
+    }
+
+    let created = 0;
+    let updated = 0;
+
+    for (const raw of materials) {
+      const payload = {
+        category: raw.category || 'otro',
+        code: String(raw.code || '').trim(),
+        description: String(raw.description || '').trim(),
+        provider: String(raw.provider || '').trim(),
+        color: raw.color || '',
+        dimension: raw.dimension || '',
+        unit: raw.unit || 'UNIDAD',
+        unitPrice: Number(raw.unitPrice) || 0,
+        pricePerSheet: Number(raw.pricePerSheet) || 0,
+        measure1: Number(raw.measure1) || 0,
+        measure2: Number(raw.measure2) || 0,
+        active: raw.active !== false
+      };
+
+      if (!payload.code || !payload.description || !payload.provider) continue;
+
+      const existing = await Material.findOne({ code: payload.code, provider: payload.provider });
+      if (existing) {
+        Object.assign(existing, payload);
+        await existing.save();
+        updated++;
+      } else {
+        await Material.create(payload);
+        created++;
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Importación: ${created} nuevos, ${updated} actualizados.`,
+      data: { created, updated, total: created + updated }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 // GET /api/materials/:id - Obtener material por ID
 router.get('/:id', async (req, res) => {
   try {
