@@ -190,6 +190,47 @@ const quotationSchema = new mongoose.Schema({
     pricePerSqm: { type: Number, default: 0 }
   },
 
+  // Wizard de Configuración Inicial (FASE 0.5)
+  wizardConfig: {
+    clientPriceMode: {
+      type: String,
+      enum: ['proportional', 'sqm', 'manual'],
+      default: 'proportional'
+    },
+    hardwareDisplayMode: {
+      type: String,
+      enum: ['table', 'included', 'selective'],
+      default: 'table'
+    },
+    moTimeMode: {
+      type: String,
+      enum: ['manual', 'table', 'mixed'],
+      default: 'manual'
+    },
+    requiresDesignFiles: {
+      type: Boolean,
+      default: false
+    },
+    designFilesInternal: {
+      type: Boolean,
+      default: false
+    },
+    areaDisplayMode: {
+      type: String,
+      enum: ['subtotals', 'global_only', 'single'],
+      default: 'subtotals'
+    },
+    mesonMode: {
+      type: String,
+      enum: ['special', 'standard', 'none'],
+      default: 'none'
+    },
+    wizardCompleted: {
+      type: Boolean,
+      default: false
+    }
+  },
+
   status: {
     type: String,
     enum: ['borrador', 'auditada', 'enviada', 'aprobada'],
