@@ -26,7 +26,7 @@ mongoose.connect(MONGODB_URI)
     
     // Auto-seed admin user on startup
     try {
-      const adminEmail = 'krontroth@gmail.com';
+      const adminEmail = 'spaziovitale.gerencia@gmail.com';
       const existingAdmin = await User.findOne({ email: adminEmail });
       if (!existingAdmin) {
         const hashedPassword = await bcrypt.hash('@dmin$2026%', 10);
