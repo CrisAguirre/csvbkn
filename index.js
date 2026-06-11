@@ -10,6 +10,7 @@ const Config = require('./models/Config');
 const materialsRoutes = require('./routes/materials');
 const configRoutes = require('./routes/config');
 const quotationsRoutes = require('./routes/quotations');
+const laborRoutes = require('./routes/labor');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -173,6 +174,7 @@ app.post('/api/register', authMiddleware, requireAdmin, async (req, res) => {
 app.use('/api/materials', materialsRoutes);
 app.use('/api/config', configRoutes);
 app.use('/api/quotations', quotationsRoutes);
+app.use('/api/labor-times', laborRoutes);
 
 app.listen(PORT, () => {
     console.log(`Backend server running on http://localhost:${PORT}`);
