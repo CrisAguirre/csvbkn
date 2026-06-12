@@ -2,7 +2,9 @@ const mongoose = require('mongoose');
 const Quotation = require('./models/Quotation');
 const User = require('./models/User');
 
-mongoose.connect('mongodb://127.0.0.1:27017/spaziovitale')
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://Cris87:Janis724@cluster0.r79rn7k.mongodb.net/spaziovitale?appName=Cluster0';
+
+mongoose.connect(MONGODB_URI)
   .then(async () => {
     try {
       const admin = await User.findOne({ role: 'admin' });
