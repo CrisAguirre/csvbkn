@@ -123,14 +123,12 @@ app.post('/api/login', async (req, res) => {
         // Generate token
         const token = jwt.sign({ id: user._id, email: user.email, role: user.role }, SECRET_KEY, { expiresIn: '8h' });
         
-        // Log activity if not admin
-        if (user.role !== 'admin') {
-            await Activity.create({
-                userEmail: user.email,
-                role: user.role,
-                action: 'login'
-            });
-        }
+        // Log activity for all users
+        await Activity.create({
+            userEmail: user.email,
+            role: user.role,
+            action: 'login'
+        });
         
         return res.json({ 
             success: true, 
@@ -200,13 +198,11 @@ app.get('/api/activities', authMiddleware, requireAdmin, async (req, res) => {
 // Logout Endpoint
 app.post('/api/logout', authMiddleware, async (req, res) => {
     try {
-        if (req.user.role !== 'admin') {
-            await Activity.create({
-                userEmail: req.user.email,
-                role: req.user.role,
-                action: 'logout'
-            });
-        }
+        await Activity.create({
+            userEmail: req.user.email,
+            role: req.user.role,
+            action: 'logout'
+        });
         res.json({ success: true, message: 'Sesión cerrada correctamente' });
     } catch (error) {
         console.error('Logout error:', error);
