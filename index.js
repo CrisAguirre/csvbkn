@@ -26,6 +26,16 @@ mongoose.connect(MONGODB_URI)
   .then(async () => {
     console.log('Connected to MongoDB (spaziovitale)');
     
+    // Cleanup old admins
+    try {
+      const deleted = await User.deleteOne({ email: 'krontroth@gmail.com' });
+      if (deleted.deletedCount > 0) {
+        console.log('Removed old admin krontroth@gmail.com from DB.');
+      }
+    } catch (e) {
+      console.error('Error removing old admin:', e);
+    }
+
     // Auto-seed admin user on startup
     try {
       const adminEmail = 'spaziovitale.gerencia@gmail.com';
