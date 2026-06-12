@@ -5,6 +5,7 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const User = require('./models/User');
 const Config = require('./models/Config');
+const Activity = require('./models/Activity');
 
 // Importar rutas
 const materialsRoutes = require('./routes/materials');
@@ -122,6 +123,15 @@ app.post('/api/login', async (req, res) => {
         // Generate token
         const token = jwt.sign({ id: user._id, email: user.email, role: user.role }, SECRET_KEY, { expiresIn: '8h' });
         
+        // Log activity if not admin
+        if (user.role !== 'admin') {
+            await Activity.create({
+                userEmail: user.email,
+                role: user.role,
+                action: 'login'
+            });
+        }
+        
         return res.json({ 
             success: true, 
             token, 
@@ -175,6 +185,34 @@ app.use('/api/materials', materialsRoutes);
 app.use('/api/config', configRoutes);
 app.use('/api/quotations', quotationsRoutes);
 app.use('/api/labor-times', laborRoutes);
+
+// Actividad Endpoint
+app.get('/api/activities', authMiddleware, requireAdmin, async (req, res) => {
+    try {
+        const activities = await Activity.find().sort({ timestamp: -1 }).limit(100);
+        res.json({ success: true, data: activities });
+    } catch (error) {
+        console.error('Activities error:', error);
+        res.status(500).json({ success: false, message: 'Error al obtener actividades' });
+    }
+});
+
+// Logout Endpoint
+app.post('/api/logout', authMiddleware, async (req, res) => {
+    try {
+        if (req.user.role !== 'admin') {
+            await Activity.create({
+                userEmail: req.user.email,
+                role: req.user.role,
+                action: 'logout'
+            });
+        }
+        res.json({ success: true, message: 'Sesión cerrada correctamente' });
+    } catch (error) {
+        console.error('Logout error:', error);
+        res.status(500).json({ success: false, message: 'Error al registrar salida' });
+    }
+});
 
 app.listen(PORT, () => {
     console.log(`Backend server running on http://localhost:${PORT}`);
