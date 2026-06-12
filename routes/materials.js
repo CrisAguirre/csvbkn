@@ -9,7 +9,7 @@ router.use(authMiddleware);
 // GET /api/materials - Listar materiales (con filtros)
 router.get('/', async (req, res) => {
   try {
-    const { category, search, active, page = 1, limit = 50 } = req.query;
+    const { category, search, active, page = 1, limit = 50, sort } = req.query;
     const filter = {};
 
     if (category) filter.category = category;
@@ -24,8 +24,14 @@ router.get('/', async (req, res) => {
     }
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
+    
+    let sortObj = { category: 1, description: 1 };
+    if (sort) {
+      sortObj = sort; // Expecting a string like "price" or "-price", mongoose handles string sorts
+    }
+
     const [materials, total] = await Promise.all([
-      Material.find(filter).sort({ category: 1, description: 1 }).skip(skip).limit(parseInt(limit)),
+      Material.find(filter).sort(sortObj).skip(skip).limit(parseInt(limit)),
       Material.countDocuments(filter)
     ]);
 
