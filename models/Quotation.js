@@ -194,8 +194,8 @@ const quotationSchema = new mongoose.Schema({
   wizardConfig: {
     clientPriceMode: {
       type: String,
-      enum: ['proportional', 'sqm', 'manual'],
-      default: 'proportional'
+      enum: ['unit_sqm', 'manual', 'outsource'],
+      default: 'unit_sqm'
     },
     hardwareDisplayMode: {
       type: String,
@@ -222,8 +222,8 @@ const quotationSchema = new mongoose.Schema({
     },
     mesonMode: {
       type: String,
-      enum: ['special', 'standard', 'none'],
-      default: 'none'
+      enum: ['includes_meson', 'no_meson'],
+      default: 'no_meson'
     },
     wizardCompleted: {
       type: Boolean,
