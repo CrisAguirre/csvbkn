@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
@@ -25,7 +26,8 @@ if (!SECRET_KEY || !MONGODB_URI) {
   process.exit(1);
 }
 
-app.use(cors());
+app.use(cors({ origin: true, credentials: true }));
+app.use(cookieParser());
 app.use(express.json({ limit: '10mb' }));
 
 // Database connection
@@ -153,14 +155,21 @@ app.post('/api/login', async (req, res) => {
             action: 'login'
         });
         
+        // Set HTTPOnly cookie
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 8 * 60 * 60 * 1000 // 8 hours
+        });
+
         return res.json({ 
             success: true, 
-            token, 
+            expiresAt: Date.now() + (8 * 60 * 60 * 1000),
             user: {
                 email: user.email,
                 role: user.role
-            },
-            message: 'Inicio de sesión exitoso' 
+            } 
         });
     } catch (error) {
         console.error('Login error:', error);
@@ -227,10 +236,11 @@ app.post('/api/logout', authMiddleware, async (req, res) => {
             role: req.user.role,
             action: 'logout'
         });
+        res.clearCookie('token');
         res.json({ success: true, message: 'Sesión cerrada correctamente' });
     } catch (error) {
         console.error('Logout error:', error);
-        res.status(500).json({ success: false, message: 'Error al registrar salida' });
+        res.status(500).json({ success: false, message: 'Error interno del servidor' });
     }
 });
 
