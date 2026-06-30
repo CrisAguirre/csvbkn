@@ -233,7 +233,13 @@ const quotationSchema = new mongoose.Schema({
 
   status: {
     type: String,
-    enum: ['nuevo', 'en_revision', 'aceptada', 'rechazada', 'archivada_aceptada', 'archivada_rechazada'],
+    enum: [
+      'nuevo', 'borrador', 
+      'en_revision', 'auditada', 
+      'enviada', 'aceptada', 'aprobada', 
+      'rechazada', 
+      'archivada_aceptada', 'archivada_rechazada'
+    ],
     default: 'nuevo',
     index: true
   },

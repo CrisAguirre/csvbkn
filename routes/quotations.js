@@ -150,8 +150,8 @@ router.put('/:id', async (req, res) => {
       if (quotation.createdBy.toString() !== req.user.id) {
         return res.status(403).json({ success: false, message: 'No tiene permisos para editar esta cotización.' });
       }
-      if (quotation.status !== 'borrador') {
-        return res.status(400).json({ success: false, message: 'Solo se pueden editar cotizaciones en estado borrador.' });
+      if (quotation.status !== 'borrador' && quotation.status !== 'nuevo') {
+        return res.status(400).json({ success: false, message: 'Solo se pueden editar cotizaciones en estado borrador o nuevo.' });
       }
     }
 
@@ -172,7 +172,13 @@ router.put('/:id', async (req, res) => {
 router.patch('/:id/status', requireAdmin, async (req, res) => {
   try {
     const { status } = req.body;
-    const validStatuses = ['borrador', 'auditada', 'enviada', 'aprobada'];
+    const validStatuses = [
+      'nuevo', 'borrador', 
+      'en_revision', 'auditada', 
+      'enviada', 'aceptada', 'aprobada', 
+      'rechazada', 
+      'archivada_aceptada', 'archivada_rechazada'
+    ];
     if (!validStatuses.includes(status)) {
       return res.status(400).json({ success: false, message: 'Estado no válido.' });
     }

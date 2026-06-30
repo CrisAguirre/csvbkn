@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
@@ -16,8 +17,13 @@ const temporalsRoutes = require('./routes/temporals');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const SECRET_KEY = process.env.JWT_SECRET || 'spaziovitale_super_secret_key_2026';
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://Cris87:Janis724@cluster0.r79rn7k.mongodb.net/spaziovitale?appName=Cluster0';
+const SECRET_KEY = process.env.JWT_SECRET;
+const MONGODB_URI = process.env.MONGODB_URI;
+
+if (!SECRET_KEY || !MONGODB_URI) {
+  console.error("FATAL ERROR: JWT_SECRET or MONGODB_URI is missing from environment variables.");
+  process.exit(1);
+}
 
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
@@ -39,18 +45,21 @@ mongoose.connect(MONGODB_URI)
 
     // Auto-seed admin user on startup
     try {
-      const adminEmail = 'spaziovitale.gerencia@gmail.com';
-      const existingAdmin = await User.findOne({ email: adminEmail });
-      if (!existingAdmin) {
-        const hashedPassword = await bcrypt.hash('@dmin$2026%', 10);
-        await User.create({
-          email: adminEmail,
-          password: hashedPassword,
-          role: 'admin'
-        });
-        console.log(`Admin user ${adminEmail} seeded successfully.`);
-      } else {
-        console.log(`Admin user ${adminEmail} already exists in DB.`);
+      const adminEmail = process.env.ADMIN_EMAIL;
+      const adminPassword = process.env.ADMIN_PASSWORD;
+      if (adminEmail && adminPassword) {
+        const existingAdmin = await User.findOne({ email: adminEmail });
+        if (!existingAdmin) {
+          const hashedPassword = await bcrypt.hash(adminPassword, 10);
+          await User.create({
+            email: adminEmail,
+            password: hashedPassword,
+            role: 'admin'
+          });
+          console.log(`Admin user ${adminEmail} seeded successfully.`);
+        } else {
+          console.log(`Admin user ${adminEmail} already exists in DB.`);
+        }
       }
     } catch (seedError) {
       console.error('Error seeding admin user:', seedError);
@@ -58,18 +67,21 @@ mongoose.connect(MONGODB_URI)
 
     // Auto-seed designer user on startup
     try {
-      const designerEmail = 'crisaguirredev@gmail.com';
-      const existingDesigner = await User.findOne({ email: designerEmail });
-      if (!existingDesigner) {
-        const hashedPassword = await bcrypt.hash('D3sign@2026$', 10);
-        await User.create({
-          email: designerEmail,
-          password: hashedPassword,
-          role: 'designer'
-        });
-        console.log(`Designer user ${designerEmail} seeded successfully.`);
-      } else {
-        console.log(`Designer user ${designerEmail} already exists in DB.`);
+      const designerEmail = process.env.DESIGNER_EMAIL;
+      const designerPassword = process.env.DESIGNER_PASSWORD;
+      if (designerEmail && designerPassword) {
+        const existingDesigner = await User.findOne({ email: designerEmail });
+        if (!existingDesigner) {
+          const hashedPassword = await bcrypt.hash(designerPassword, 10);
+          await User.create({
+            email: designerEmail,
+            password: hashedPassword,
+            role: 'designer'
+          });
+          console.log(`Designer user ${designerEmail} seeded successfully.`);
+        } else {
+          console.log(`Designer user ${designerEmail} already exists in DB.`);
+        }
       }
     } catch (seedError) {
       console.error('Error seeding designer user:', seedError);

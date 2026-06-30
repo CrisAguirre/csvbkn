@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const Temporal = require('../models/Temporal');
+const { authMiddleware } = require('../middleware/auth');
 
 // Obtener todas las cotizaciones temporales
-router.get('/', async (req, res) => {
+router.get('/', authMiddleware, async (req, res) => {
   try {
     // Ordenar de más reciente a más antigua
     const temporals = await Temporal.find().sort({ updatedAt: -1 });
@@ -14,7 +15,7 @@ router.get('/', async (req, res) => {
 });
 
 // Obtener una cotización temporal por ID
-router.get('/:id', async (req, res) => {
+router.get('/:id', authMiddleware, async (req, res) => {
   try {
     const temporal = await Temporal.findById(req.params.id);
     if (!temporal) {
@@ -28,7 +29,7 @@ router.get('/:id', async (req, res) => {
 
 // Crear o actualizar una cotización temporal (usando PUT para idempotencia si se manda el ID en body, o POST si es nueva)
 // En este caso, usaremos POST y la lógica decidirá si crear o actualizar.
-router.post('/', async (req, res) => {
+router.post('/', authMiddleware, async (req, res) => {
   try {
     const { _id, clientName, currentStepName, currentStepNumber, data } = req.body;
     
@@ -57,7 +58,7 @@ router.post('/', async (req, res) => {
 });
 
 // Eliminar una cotización temporal
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authMiddleware, async (req, res) => {
   try {
     const temporal = await Temporal.findByIdAndDelete(req.params.id);
     if (!temporal) {
