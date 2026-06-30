@@ -158,8 +158,8 @@ app.post('/api/login', async (req, res) => {
         // Set HTTPOnly cookie
         res.cookie('token', token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
+            secure: true, // Requerido para sameSite='none' (HTTPS)
+            sameSite: 'none', // Requerido para cross-origin (Render -> Vercel/Localhost)
             maxAge: 8 * 60 * 60 * 1000 // 8 hours
         });
 
@@ -236,7 +236,7 @@ app.post('/api/logout', authMiddleware, async (req, res) => {
             role: req.user.role,
             action: 'logout'
         });
-        res.clearCookie('token');
+        res.clearCookie('token', { httpOnly: true, secure: true, sameSite: 'none' });
         res.json({ success: true, message: 'Sesión cerrada correctamente' });
     } catch (error) {
         console.error('Logout error:', error);
