@@ -3,6 +3,7 @@ const router = express.Router();
 const Quotation = require('../models/Quotation');
 const Config = require('../models/Config');
 const { authMiddleware, requireAdmin } = require('../middleware/auth');
+const { recalculateAll } = require('../utils/calculator');
 
 router.use(authMiddleware);
 
@@ -129,6 +130,9 @@ router.post('/', async (req, res) => {
       validityDays: req.body.validityDays || config.validityDays
     };
 
+    // Forzar cálculo seguro en el backend
+    recalculateAll(quotationData, config);
+
     const quotation = new Quotation(quotationData);
     await quotation.save();
 
@@ -165,6 +169,13 @@ router.put('/:id', async (req, res) => {
     delete updateData.createdBy;
 
     Object.assign(quotation, updateData);
+
+    // Forzar cálculo seguro en el backend
+    const config = await Config.findOne({ key: 'global' });
+    if (config) {
+      recalculateAll(quotation, config);
+    }
+
     await quotation.save();
 
     res.json({ success: true, data: quotation, message: 'Cotización actualizada exitosamente.' });
