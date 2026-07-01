@@ -12,7 +12,13 @@ router.get('/', async (req, res) => {
     const { category, search, active, page = 1, limit = 50, sort } = req.query;
     const filter = {};
 
-    if (category) filter.category = category;
+    if (category) {
+      if (category.includes(',')) {
+        filter.category = { $in: category.split(',').map(c => c.trim()) };
+      } else {
+        filter.category = category;
+      }
+    }
     if (active !== undefined) filter.active = active === 'true';
     if (search) {
       filter.$or = [
