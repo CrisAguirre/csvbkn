@@ -1,0 +1,9 @@
+{"level":"info","message":"Backend server running on http://localhost:3000","timestamp":"2026-07-01 00:41:01"}
+{"level":"info","message":"Backend server running on http://localhost:3000","timestamp":"2026-07-01 00:47:18"}
+{"level":"info","message":"\u001b[0mPOST /api/login \u001b[31m500\u001b[0m 3.283 ms - 1462\u001b[0m","timestamp":"2026-07-01 00:49:09"}
+{"level":"info","message":"\u001b[0mPOST /api/login \u001b[31m500\u001b[0m 0.712 ms - 1462\u001b[0m","timestamp":"2026-07-01 00:49:30"}
+{"level":"info","message":"Backend server running on http://localhost:3000","timestamp":"2026-07-01 00:50:19"}
+{"level":"info","message":"\u001b[0mPOST /api/login \u001b[31m500\u001b[0m 4.899 ms - 1462\u001b[0m","timestamp":"2026-07-01 00:50:31"}
+{"level":"info","message":"Backend server running on http://localhost:3000","timestamp":"2026-07-01 00:50:57"}
+{"level":"error","message":"Validation Error [POST] /api/login: [{\"field\":\"email\",\"message\":\"Debe ser un correo válido\"}]","timestamp":"2026-07-01 00:51:07"}
+{"level":"info","message":"\u001b[0mPOST /api/login \u001b[33m400\u001b[0m 6.416 ms - 132\u001b[0m","timestamp":"2026-07-01 00:51:07"}

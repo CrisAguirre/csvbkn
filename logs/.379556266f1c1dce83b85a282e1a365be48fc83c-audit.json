@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "C:\\Users\\USUARIO\\Desktop\\@\\Custom Apps\\Cotizador SV\\csvbkn\\logs\\.379556266f1c1dce83b85a282e1a365be48fc83c-audit.json",
+    "files": [
+        {
+            "date": 1782884460852,
+            "name": "C:\\Users\\USUARIO\\Desktop\\@\\Custom Apps\\Cotizador SV\\csvbkn\\logs\\application-2026-07-01.log",
+            "hash": "5cfe8702e5e4a4b3cbb986ff29d9421d0d2d9f91bfc09c86dbca75814404dd73"
+        }
+    ],
+    "hashType": "sha256"
+}

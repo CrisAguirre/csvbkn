@@ -4,6 +4,9 @@ const Quotation = require('../models/Quotation');
 const Config = require('../models/Config');
 const { authMiddleware, requireAdmin } = require('../middleware/auth');
 const { recalculateAll } = require('../utils/calculator');
+const logger = require('../utils/logger');
+const validate = require('../middleware/validate');
+const { quotationSchema, updateQuotationStatusSchema } = require('../utils/schemas');
 
 router.use(authMiddleware);
 
@@ -109,7 +112,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // POST /api/quotations - Crear cotización
-router.post('/', async (req, res) => {
+router.post('/', validate(quotationSchema), async (req, res) => {
   try {
     // Obtener siguiente número
     const config = await Config.findOneAndUpdate(
@@ -142,12 +145,13 @@ router.post('/', async (req, res) => {
       message: `Cotización No.${quotation.number} creada exitosamente.`
     });
   } catch (error) {
+    logger.error('Error creando cotización: ' + error.message);
     res.status(400).json({ success: false, message: error.message });
   }
 });
 
 // PUT /api/quotations/:id - Actualizar cotización
-router.put('/:id', async (req, res) => {
+router.put('/:id', validate(quotationSchema), async (req, res) => {
   try {
     const quotation = await Quotation.findById(req.params.id);
     if (!quotation) {
@@ -180,12 +184,13 @@ router.put('/:id', async (req, res) => {
 
     res.json({ success: true, data: quotation, message: 'Cotización actualizada exitosamente.' });
   } catch (error) {
+    logger.error('Error actualizando cotización ' + req.params.id + ': ' + error.message);
     res.status(400).json({ success: false, message: error.message });
   }
 });
 
 // PATCH /api/quotations/:id/status - Cambiar estado (solo admin)
-router.patch('/:id/status', requireAdmin, async (req, res) => {
+router.patch('/:id/status', requireAdmin, validate(updateQuotationStatusSchema), async (req, res) => {
   try {
     const { status } = req.body;
     const validStatuses = [

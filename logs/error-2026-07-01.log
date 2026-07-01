@@ -1,0 +1,1 @@
+{"level":"error","message":"Validation Error [POST] /api/login: [{\"field\":\"email\",\"message\":\"Debe ser un correo válido\"}]","timestamp":"2026-07-01 00:51:07"}

@@ -2,6 +2,9 @@ const express = require('express');
 const router = express.Router();
 const Material = require('../models/Material');
 const { authMiddleware, requireAdmin } = require('../middleware/auth');
+const logger = require('../utils/logger');
+const validate = require('../middleware/validate');
+const { materialSchema, bulkUpsertSchema } = require('../utils/schemas');
 
 // Todas las rutas requieren autenticación
 router.use(authMiddleware);
@@ -57,7 +60,7 @@ router.get('/', async (req, res) => {
 });
 
 // POST /api/materials/bulk-upsert - Crear o actualizar por code + provider (solo admin)
-router.post('/bulk-upsert', requireAdmin, async (req, res) => {
+router.post('/bulk-upsert', requireAdmin, validate(bulkUpsertSchema), async (req, res) => {
   try {
     const { materials, replaceProvider } = req.body;
     if (!Array.isArray(materials) || materials.length === 0) {
@@ -106,6 +109,7 @@ router.post('/bulk-upsert', requireAdmin, async (req, res) => {
       data: { created, updated, total: created + updated }
     });
   } catch (error) {
+    logger.error('Error en /bulk-upsert de materiales: ' + error.message);
     res.status(500).json({ success: false, message: error.message });
   }
 });
@@ -124,7 +128,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // POST /api/materials - Crear material (solo admin)
-router.post('/', requireAdmin, async (req, res) => {
+router.post('/', requireAdmin, validate(materialSchema), async (req, res) => {
   try {
     const material = new Material(req.body);
     await material.save();
@@ -135,7 +139,7 @@ router.post('/', requireAdmin, async (req, res) => {
 });
 
 // PUT /api/materials/:id - Actualizar material (solo admin)
-router.put('/:id', requireAdmin, async (req, res) => {
+router.put('/:id', requireAdmin, validate(materialSchema), async (req, res) => {
   try {
     const material = await Material.findById(req.params.id);
     if (!material) {
@@ -177,6 +181,7 @@ router.post('/bulk', requireAdmin, async (req, res) => {
       data: result
     });
   } catch (error) {
+    logger.error('Error en /bulk de materiales: ' + error.message);
     res.status(400).json({ success: false, message: error.message });
   }
 });

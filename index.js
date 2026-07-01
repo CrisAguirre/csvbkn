@@ -1,6 +1,10 @@
 require('dotenv').config();
+process.env.TZ = 'America/Bogota'; // Forzar zona horaria local
+
 const express = require('express');
 const cors = require('cors');
+const morgan = require('morgan');
+const logger = require('./utils/logger');
 const cookieParser = require('cookie-parser');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
@@ -8,6 +12,10 @@ const bcrypt = require('bcryptjs');
 const User = require('./models/User');
 const Config = require('./models/Config');
 const Activity = require('./models/Activity');
+
+// Importar Utils
+const validate = require('./middleware/validate');
+const { loginSchema, registerSchema } = require('./utils/schemas');
 
 // Importar rutas
 const materialsRoutes = require('./routes/materials');
@@ -29,6 +37,14 @@ if (!SECRET_KEY || !MONGODB_URI) {
 app.use(cors({ origin: true, credentials: true }));
 app.use(cookieParser());
 app.use(express.json({ limit: '10mb' }));
+
+// Configurar Morgan para registrar las peticiones HTTP a través de Winston
+const morganFormat = process.env.NODE_ENV === 'production' ? 'combined' : 'dev';
+app.use(morgan(morganFormat, {
+  stream: {
+    write: (message) => logger.info(message.trim())
+  }
+}));
 
 // Database connection
 mongoose.connect(MONGODB_URI)
@@ -119,11 +135,11 @@ mongoose.connect(MONGODB_URI)
     }
   })
   .catch((err) => {
-    console.error('MongoDB connection error:', err);
+    logger.error('MongoDB connection error: ' + err.message);
   });
 
 // Login Endpoint
-app.post('/api/login', async (req, res) => {
+app.post('/api/login', validate(loginSchema), async (req, res) => {
     try {
         const { email, password } = req.body;
 
@@ -172,7 +188,7 @@ app.post('/api/login', async (req, res) => {
             } 
         });
     } catch (error) {
-        console.error('Login error:', error);
+        logger.error(`Login error for email ${req.body?.email}: ` + error.message);
         return res.status(500).json({ 
             success: false, 
             message: 'Error en el servidor al intentar iniciar sesión' 
@@ -183,7 +199,7 @@ app.post('/api/login', async (req, res) => {
 // Register endpoint (solo admin puede crear usuarios)
 const { authMiddleware, requireAdmin } = require('./middleware/auth');
 
-app.post('/api/register', authMiddleware, requireAdmin, async (req, res) => {
+app.post('/api/register', authMiddleware, requireAdmin, validate(registerSchema), async (req, res) => {
     try {
         const { email, password, role } = req.body;
 
@@ -245,5 +261,5 @@ app.post('/api/logout', authMiddleware, async (req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`Backend server running on http://localhost:${PORT}`);
+    logger.info(`Backend server running on http://localhost:${PORT}`);
 });
