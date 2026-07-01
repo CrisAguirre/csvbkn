@@ -76,7 +76,30 @@ const installationItemSchema = new mongoose.Schema({
   totalPrice: { type: Number, default: 0 }
 }, { _id: false });
 
-// Esquema de mueble con las 7 secciones
+const veneerItemSchema = new mongoose.Schema({
+  description: { type: String, default: '' },
+  quantity: { type: Number, default: 0 },
+  unitPrice: { type: Number, default: 0 },
+  totalPrice: { type: Number, default: 0 }
+}, { _id: false });
+
+const mesonDetailsSchema = new mongoose.Schema({
+  materialId: { type: mongoose.Schema.Types.ObjectId, ref: 'Material' },
+  materialName: { type: String, default: '' },
+  basePricePerM2: { type: Number, default: 0 },
+  depth: { type: Number, default: 0.8 },
+  transportCost: { type: Number, default: 180000 },
+  profitPercentage: { type: Number, default: 68 },
+  taxPercentage: { type: Number, default: 19 },
+  linearPrice: { type: Number, default: 0 },
+  baseCost: { type: Number, default: 0 },
+  profitAmount: { type: Number, default: 0 },
+  subtotal: { type: Number, default: 0 },
+  taxAmount: { type: Number, default: 0 },
+  finalPricePerMl: { type: Number, default: 0 }
+}, { _id: false });
+
+// Esquema de mueble con las 8 secciones
 const furnitureSchema = new mongoose.Schema({
   name: { type: String, required: true },
   description: { type: String, default: '' },
@@ -94,6 +117,8 @@ const furnitureSchema = new mongoose.Schema({
   cuts: [cutItemSchema],
   assembly: [assemblyItemSchema],
   installation: [installationItemSchema],
+  veneer: [veneerItemSchema],
+  mesonDetails: { type: mesonDetailsSchema, default: null },
 
   // Totales calculados
   totalSupplies: { type: Number, default: 0 },
@@ -103,6 +128,7 @@ const furnitureSchema = new mongoose.Schema({
   totalCuts: { type: Number, default: 0 },
   totalAssembly: { type: Number, default: 0 },
   totalInstallation: { type: Number, default: 0 },
+  totalVeneer: { type: Number, default: 0 },
   totalCost: { type: Number, default: 0 },
   totalBudget: { type: Number, default: 0 }
 });
