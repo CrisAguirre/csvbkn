@@ -62,7 +62,7 @@ router.get('/stats', async (req, res) => {
       filter.createdBy = req.user.id;
     }
 
-    const [totalQuotations, monthQuotations, statusCounts, monthTotal] = await Promise.all([
+    const [totalQuotations, monthQuotations, statusCounts, monthTotal, allTimeTotal] = await Promise.all([
       Quotation.countDocuments(filter),
       Quotation.countDocuments({ ...filter, createdAt: { $gte: startOfMonth } }),
       Quotation.aggregate([
@@ -71,6 +71,10 @@ router.get('/stats', async (req, res) => {
       ]),
       Quotation.aggregate([
         { $match: { ...filter, createdAt: { $gte: startOfMonth } } },
+        { $group: { _id: null, total: { $sum: '$totals.grandTotal' } } }
+      ]),
+      Quotation.aggregate([
+        { $match: filter },
         { $group: { _id: null, total: { $sum: '$totals.grandTotal' } } }
       ])
     ]);
@@ -81,7 +85,8 @@ router.get('/stats', async (req, res) => {
         totalQuotations,
         monthQuotations,
         statusCounts: statusCounts.reduce((acc, s) => { acc[s._id] = s.count; return acc; }, {}),
-        monthTotal: monthTotal[0]?.total || 0
+        monthTotal: monthTotal[0]?.total || 0,
+        allTimeTotal: allTimeTotal[0]?.total || 0
       }
     });
   } catch (error) {
