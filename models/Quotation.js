@@ -79,8 +79,9 @@ const installationItemSchema = new mongoose.Schema({
 
 const veneerItemSchema = new mongoose.Schema({
   description: { type: String, default: '' },
-  quantity: { type: Number, default: 0 },
-  unitPrice: { type: Number, default: 0 },
+  ml: { type: Number, default: 0 },
+  timeHours: { type: Number, default: 0 },
+  laborRate: { type: Number, default: 0 },
   totalPrice: { type: Number, default: 0 }
 }, { _id: false });
 
