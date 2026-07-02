@@ -7,6 +7,7 @@ const supplyItemSchema = new mongoose.Schema({
   providerColor: { type: String, default: '' },
   dimension: { type: String, default: '' },
   unitOfMeasure: { type: String, default: 'LAMINA' },
+  quantityMode: { type: String, enum: ['unit', 'sqm'], default: 'unit' },
   quantity: { type: Number, default: 0 },
   total: { type: Number, default: 0 },
   unitPrice: { type: Number, default: 0 },
