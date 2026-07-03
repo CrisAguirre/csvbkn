@@ -12,7 +12,7 @@ router.use(authMiddleware);
 // GET /api/materials - Listar materiales (con filtros)
 router.get('/', async (req, res) => {
   try {
-    const { category, search, active, page = 1, limit = 50, sort } = req.query;
+    const { category, search, active, provider, page = 1, limit = 50, sort } = req.query;
     const filter = {};
 
     if (category) {
@@ -22,6 +22,7 @@ router.get('/', async (req, res) => {
         filter.category = category;
       }
     }
+    if (provider) filter.provider = provider;
     if (active !== undefined) filter.active = active === 'true';
     if (search) {
       filter.$or = [
@@ -54,6 +55,18 @@ router.get('/', async (req, res) => {
         pages: Math.ceil(total / parseInt(limit))
       }
     });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// GET /api/materials/providers - Listar proveedores únicos
+router.get('/providers', async (req, res) => {
+  try {
+    const providers = await Material.distinct('provider');
+    // Filtrar falsy values y ordenar
+    const validProviders = providers.filter(p => p).sort();
+    res.json({ success: true, data: validProviders });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

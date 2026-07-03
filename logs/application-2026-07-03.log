@@ -70,3 +70,6 @@
 {"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 22532.673 ms - 114\u001b[0m","timestamp":"2026-07-03 18:07:44"}
 {"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 7869.901 ms - 114\u001b[0m","timestamp":"2026-07-03 18:07:52"}
 {"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 8671.987 ms - 114\u001b[0m","timestamp":"2026-07-03 18:08:01"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 117210.992 ms - 119\u001b[0m","timestamp":"2026-07-03 18:09:58"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 51691.444 ms - 119\u001b[0m","timestamp":"2026-07-03 18:10:49"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 8762.106 ms - 114\u001b[0m","timestamp":"2026-07-03 18:10:58"}
