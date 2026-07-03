@@ -4,7 +4,7 @@ const materialSchema = new mongoose.Schema({
   category: {
     type: String,
     required: true,
-    enum: ['melamina', 'canto', 'accesorio', 'herraje', 'vidrio', 'meson', 'otro'],
+    enum: ['melamina', 'canto', 'accesorio', 'herraje', 'vidrio', 'meson', 'laminado', 'compactslab', 'duraopak', 'otro'],
     index: true
   },
   code: {

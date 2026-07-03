@@ -1,0 +1,41 @@
+{"level":"info","message":"Backend server running on http://localhost:3000","timestamp":"2026-07-03 16:18:56"}
+{"level":"info","message":"\u001b[0mPOST /api/login \u001b[32m200\u001b[0m 620.212 ms - 108\u001b[0m","timestamp":"2026-07-03 16:19:12"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 120162.322 ms - 117\u001b[0m","timestamp":"2026-07-03 16:21:12"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 23190.816 ms - 114\u001b[0m","timestamp":"2026-07-03 16:21:35"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 8863.465 ms - 114\u001b[0m","timestamp":"2026-07-03 16:21:44"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 17750.991 ms - 114\u001b[0m","timestamp":"2026-07-03 16:22:02"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 8563.104 ms - 114\u001b[0m","timestamp":"2026-07-03 16:22:10"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 11121.558 ms - 114\u001b[0m","timestamp":"2026-07-03 16:22:22"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 118139.725 ms - 117\u001b[0m","timestamp":"2026-07-03 16:24:20"}
+{"level":"error","message":"Error en /bulk-upsert de materiales: Material validation failed: category: `laminado` is not a valid enum value for path `category`.","timestamp":"2026-07-03 16:24:33"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[31m500\u001b[0m 13524.631 ms - 125\u001b[0m","timestamp":"2026-07-03 16:24:33"}
+{"level":"info","message":"Backend server running on http://localhost:3000","timestamp":"2026-07-03 16:25:34"}
+{"level":"info","message":"\u001b[0mPOST /api/login \u001b[32m200\u001b[0m 334.773 ms - 108\u001b[0m","timestamp":"2026-07-03 16:25:45"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 144061.201 ms - 117\u001b[0m","timestamp":"2026-07-03 16:28:09"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 17308.446 ms - 114\u001b[0m","timestamp":"2026-07-03 16:28:27"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 8159.552 ms - 114\u001b[0m","timestamp":"2026-07-03 16:28:35"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 23499.226 ms - 114\u001b[0m","timestamp":"2026-07-03 16:28:58"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 9977.443 ms - 114\u001b[0m","timestamp":"2026-07-03 16:29:08"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 10377.741 ms - 114\u001b[0m","timestamp":"2026-07-03 16:29:19"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 102994.351 ms - 119\u001b[0m","timestamp":"2026-07-03 16:31:02"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 56030.162 ms - 119\u001b[0m","timestamp":"2026-07-03 16:31:58"}
+{"level":"info","message":"\u001b[0mPOST /api/login \u001b[32m200\u001b[0m 337.502 ms - 108\u001b[0m","timestamp":"2026-07-03 16:46:25"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 137799.466 ms - 117\u001b[0m","timestamp":"2026-07-03 16:48:42"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 19304.225 ms - 114\u001b[0m","timestamp":"2026-07-03 16:49:02"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 5849.486 ms - 114\u001b[0m","timestamp":"2026-07-03 16:49:08"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 17762.448 ms - 114\u001b[0m","timestamp":"2026-07-03 16:49:25"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 12033.127 ms - 114\u001b[0m","timestamp":"2026-07-03 16:49:37"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 8204.570 ms - 114\u001b[0m","timestamp":"2026-07-03 16:49:46"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 116338.550 ms - 119\u001b[0m","timestamp":"2026-07-03 16:51:42"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 53771.246 ms - 119\u001b[0m","timestamp":"2026-07-03 16:52:36"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 5434.703 ms - 114\u001b[0m","timestamp":"2026-07-03 16:52:41"}
+{"level":"info","message":"\u001b[0mPOST /api/login \u001b[32m200\u001b[0m 365.115 ms - 108\u001b[0m","timestamp":"2026-07-03 16:58:22"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 148956.145 ms - 117\u001b[0m","timestamp":"2026-07-03 17:00:51"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 19925.754 ms - 114\u001b[0m","timestamp":"2026-07-03 17:01:11"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 8735.648 ms - 114\u001b[0m","timestamp":"2026-07-03 17:01:20"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 20759.577 ms - 114\u001b[0m","timestamp":"2026-07-03 17:01:40"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 8463.793 ms - 114\u001b[0m","timestamp":"2026-07-03 17:01:49"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 11084.054 ms - 114\u001b[0m","timestamp":"2026-07-03 17:02:00"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 113382.132 ms - 119\u001b[0m","timestamp":"2026-07-03 17:03:53"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 48770.333 ms - 119\u001b[0m","timestamp":"2026-07-03 17:04:42"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 4504.852 ms - 114\u001b[0m","timestamp":"2026-07-03 17:04:47"}

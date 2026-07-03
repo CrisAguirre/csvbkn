@@ -1,0 +1,1 @@
+{"level":"error","message":"Error en /bulk-upsert de materiales: Material validation failed: category: `laminado` is not a valid enum value for path `category`.","timestamp":"2026-07-03 16:24:33"}
