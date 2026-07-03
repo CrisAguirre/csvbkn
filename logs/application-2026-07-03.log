@@ -73,3 +73,4 @@
 {"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 117210.992 ms - 119\u001b[0m","timestamp":"2026-07-03 18:09:58"}
 {"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 51691.444 ms - 119\u001b[0m","timestamp":"2026-07-03 18:10:49"}
 {"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 8762.106 ms - 114\u001b[0m","timestamp":"2026-07-03 18:10:58"}
+{"level":"info","message":"Backend server running on http://localhost:3000","timestamp":"2026-07-03 18:11:45"}
