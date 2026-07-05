@@ -42,6 +42,27 @@ const materialSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  // --- Nuevos campos para precios escalonados (Ej. Duropak) ---
+  pricePublic: {
+    type: Number,
+    default: 0
+  },
+  pricePublicVol: {
+    type: Number,
+    default: 0
+  },
+  priceIndustrial: {
+    type: Number,
+    default: 0
+  },
+  priceIndustrialVol: {
+    type: Number,
+    default: 0
+  },
+  volThreshold: {
+    type: Number,
+    default: 0
+  },
   // Campos específicos para melaminas
   pricePerSheet: {
     type: Number,

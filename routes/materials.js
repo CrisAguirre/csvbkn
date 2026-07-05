@@ -98,6 +98,11 @@ router.post('/bulk-upsert', requireAdmin, validate(bulkUpsertSchema), async (req
         unit: raw.unit || 'UNIDAD',
         unitPrice: Number(raw.unitPrice) || 0,
         pricePerSheet: Number(raw.pricePerSheet) || 0,
+        pricePublic: Number(raw.pricePublic) || 0,
+        pricePublicVol: Number(raw.pricePublicVol) || 0,
+        priceIndustrial: Number(raw.priceIndustrial) || 0,
+        priceIndustrialVol: Number(raw.priceIndustrialVol) || 0,
+        volThreshold: Number(raw.volThreshold) || 0,
         measure1: Number(raw.measure1) || 0,
         measure2: Number(raw.measure2) || 0,
         active: raw.active !== false

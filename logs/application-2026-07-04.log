@@ -1,1 +1,17 @@
 {"level":"info","message":"Backend server running on http://localhost:3000","timestamp":"2026-07-04 09:21:38"}
+{"level":"info","message":"Backend server running on http://localhost:3000","timestamp":"2026-07-04 14:05:40"}
+{"level":"info","message":"\u001b[0mPOST /api/login \u001b[32m200\u001b[0m 1909.553 ms - 108\u001b[0m","timestamp":"2026-07-04 14:05:59"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 144884.831 ms - 117\u001b[0m","timestamp":"2026-07-04 14:08:24"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 20282.530 ms - 114\u001b[0m","timestamp":"2026-07-04 14:08:44"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 9285.007 ms - 114\u001b[0m","timestamp":"2026-07-04 14:08:53"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 20260.399 ms - 114\u001b[0m","timestamp":"2026-07-04 14:09:14"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 11075.158 ms - 114\u001b[0m","timestamp":"2026-07-04 14:09:25"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 12535.204 ms - 114\u001b[0m","timestamp":"2026-07-04 14:09:37"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 149116.091 ms - 121\u001b[0m","timestamp":"2026-07-04 14:12:06"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 63355.968 ms - 119\u001b[0m","timestamp":"2026-07-04 14:13:10"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 7528.123 ms - 114\u001b[0m","timestamp":"2026-07-04 14:13:17"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 353423.055 ms - 121\u001b[0m","timestamp":"2026-07-04 14:19:11"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 80230.368 ms - 117\u001b[0m","timestamp":"2026-07-04 14:20:31"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 19559.158 ms - 114\u001b[0m","timestamp":"2026-07-04 14:20:51"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 15470.684 ms - 116\u001b[0m","timestamp":"2026-07-04 14:21:06"}
+{"level":"info","message":"\u001b[0mPOST /api/materials/bulk-upsert \u001b[32m200\u001b[0m 2764.569 ms - 114\u001b[0m","timestamp":"2026-07-04 14:21:09"}

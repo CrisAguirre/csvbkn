@@ -253,6 +253,11 @@ const quotationSchema = new mongoose.Schema({
       enum: ['includes_meson', 'no_meson'],
       default: 'no_meson'
     },
+    pricingTier: {
+      type: String,
+      enum: ['industrial', 'public'],
+      default: 'industrial'
+    },
     wizardCompleted: {
       type: Boolean,
       default: false
