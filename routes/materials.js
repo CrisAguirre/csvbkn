@@ -172,6 +172,27 @@ router.put('/:id', requireAdmin, validate(materialSchema), async (req, res) => {
   }
 });
 
+// POST /api/materials/rename-provider - Renombrar proveedor en todos sus materiales (solo admin)
+router.post('/rename-provider', requireAdmin, async (req, res) => {
+  try {
+    const { oldName, newName } = req.body;
+    if (!oldName || !newName) {
+      return res.status(400).json({ success: false, message: 'Se requieren oldName y newName.' });
+    }
+    const result = await Material.updateMany(
+      { provider: oldName },
+      { $set: { provider: newName } }
+    );
+    res.json({
+      success: true,
+      message: `Proveedor renombrado: ${result.modifiedCount} materiales actualizados.`,
+      data: { modifiedCount: result.modifiedCount }
+    });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+});
+
 // DELETE /api/materials/:id - Eliminar material (solo admin)
 router.delete('/:id', requireAdmin, async (req, res) => {
   try {
