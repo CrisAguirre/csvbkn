@@ -65,16 +65,26 @@ async function importMesonesGranito() {
   const ws = wb.Sheets['PRECIO MESONES GRANITO'];
   const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
 
+  const seen = new Set();
   const bulk = [];
   let started = false;
+  let firstSectionDone = false;
   for (let i = 0; i < rows.length; i++) {
     const r = rows[i];
     if (!r || !r[0]) continue;
-    if (String(r[0]).trim() === 'NOMBRE GRANITO') { started = true; continue; }
-    if (String(r[0]).trim().startsWith('VALORES PARA')) { started = false; continue; }
+    if (String(r[0]).trim() === 'NOMBRE GRANITO') {
+      if (firstSectionDone) break;
+      started = true; continue;
+    }
+    if (String(r[0]).trim().startsWith('VALORES PARA')) {
+      if (started) firstSectionDone = true;
+      started = false; continue;
+    }
     if (!started) continue;
     const name = r[0] ? String(r[0]).trim() : '';
-    if (!name || name === 'NOMBRE GRANITO') continue;
+    if (!name) continue;
+    if (seen.has(name)) continue;
+    seen.add(name);
     const provider = r[10] ? String(r[10]).trim() : 'ROCA MARMOL';
     bulk.push({
       category: 'meson',
@@ -145,6 +155,9 @@ async function main() {
   try {
     await mongoose.connect(MONGODB_URI);
     console.log('Conectado a MongoDB');
+    // Limpiar todas las categorías antes de importar
+    await Material.deleteMany({ category: { $in: ['herraje', 'meson', 'compactslab'] } });
+    console.log('Registros anteriores eliminados');
     const h = await importHerraje();
     const m = await importMesonesGranito();
     const c = await importCompac();
