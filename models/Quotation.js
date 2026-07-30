@@ -186,11 +186,20 @@ const quotationSchema = new mongoose.Schema({
     type: String,
     default: 'San Juan de Pasto'
   },
+  installationAddress: {
+    type: String,
+    default: ''
+  },
+  sameAddress: {
+    type: Boolean,
+    default: true
+  },
   client: {
     name: { type: String, required: true },
     city: { type: String, default: 'Ciudad' },
     phone: { type: String, default: '' },
-    email: { type: String, default: '' }
+    email: { type: String, default: '' },
+    address: { type: String, default: '' }
   },
   title: {
     type: String,
