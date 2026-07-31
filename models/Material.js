@@ -22,6 +22,11 @@ const materialSchema = new mongoose.Schema({
     trim: true,
     default: ''
   },
+  brand: {
+    type: String,
+    trim: true,
+    default: ''
+  },
   color: {
     type: String,
     trim: true,
@@ -35,7 +40,7 @@ const materialSchema = new mongoose.Schema({
   unit: {
     type: String,
     required: true,
-    enum: ['LAMINA', 'ML', 'UNIDAD', 'SERVICIO', 'KIT', 'TIROS', 'M2', 'SER', 'JUEGO'],
+    enum: ['LAMINA', 'ML', 'UNIDAD', 'SERVICIO', 'KIT', 'TIROS', 'TIRO', 'M2', 'SER', 'JUEGO'],
     default: 'UNIDAD'
   },
   unitPrice: {

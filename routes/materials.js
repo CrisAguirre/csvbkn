@@ -12,7 +12,7 @@ router.use(authMiddleware);
 // GET /api/materials - Listar materiales (con filtros)
 router.get('/', async (req, res) => {
   try {
-    const { category, search, active, provider, page = 1, limit = 50, sort } = req.query;
+    const { category, search, active, provider, brand, page = 1, limit = 50, sort } = req.query;
     const filter = {};
 
     if (category) {
@@ -23,12 +23,14 @@ router.get('/', async (req, res) => {
       }
     }
     if (provider) filter.provider = provider;
+    if (brand) filter.brand = brand;
     if (active !== undefined) filter.active = active === 'true';
     if (search) {
       filter.$or = [
         { description: { $regex: search, $options: 'i' } },
         { code: { $regex: search, $options: 'i' } },
         { provider: { $regex: search, $options: 'i' } },
+        { brand: { $regex: search, $options: 'i' } },
         { color: { $regex: search, $options: 'i' } }
       ];
     }
@@ -72,6 +74,17 @@ router.get('/providers', async (req, res) => {
   }
 });
 
+// GET /api/materials/brands - Listar marcas únicas
+router.get('/brands', async (req, res) => {
+  try {
+    const brands = await Material.distinct('brand');
+    const validBrands = brands.filter(b => b).sort();
+    res.json({ success: true, data: validBrands });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 // POST /api/materials/bulk-upsert - Crear o actualizar por code + provider (solo admin)
 router.post('/bulk-upsert', requireAdmin, validate(bulkUpsertSchema), async (req, res) => {
   try {
@@ -93,6 +106,7 @@ router.post('/bulk-upsert', requireAdmin, validate(bulkUpsertSchema), async (req
         code: String(raw.code || '').trim(),
         description: String(raw.description || '').trim(),
         provider: String(raw.provider || '').trim(),
+        brand: raw.brand ? String(raw.brand).trim() : '',
         color: raw.color || '',
         dimension: raw.dimension || '',
         unit: raw.unit || 'UNIDAD',
