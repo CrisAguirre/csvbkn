@@ -21,7 +21,7 @@ function cleanPrice(val) {
 
 function mapUnit(u) {
   if (!u) return 'UNIDAD';
-  const map = { UND: 'UNIDAD', ML: 'ML', JUEGO: 'JUEGO', PAR: 'UNIDAD', TIRO: 'UNIDAD', UNIDAD: 'UNIDAD' };
+  const map = { UND: 'UNIDAD', ML: 'ML', JUEGO: 'JUEGO', PAR: 'UNIDAD', TIRO: 'TIRO', UNIDAD: 'UNIDAD' };
   return map[String(u).trim().toUpperCase()] || 'UNIDAD';
 }
 
