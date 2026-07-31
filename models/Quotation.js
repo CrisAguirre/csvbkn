@@ -36,7 +36,8 @@ const accessoryItemSchema = new mongoose.Schema({
   totalTime: { type: Number, default: 0 },
   laborRate: { type: Number, default: 0 },
   unitPrice: { type: Number, default: 0 },
-  totalPrice: { type: Number, default: 0 }
+  totalPrice: { type: Number, default: 0 },
+  apply5Percent: { type: Boolean, default: false }
 }, { _id: false });
 
 const designTimeItemSchema = new mongoose.Schema({
