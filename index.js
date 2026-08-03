@@ -138,6 +138,11 @@ mongoose.connect(MONGODB_URI)
     logger.error('MongoDB connection error: ' + err.message);
   });
 
+// Endpoint de "despertado" - responde rápido para calentar el server cuando carga la página de login
+app.get('/api/ping', (req, res) => {
+    res.json({ success: true, ts: Date.now() });
+});
+
 // Login Endpoint
 app.post('/api/login', validate(loginSchema), async (req, res) => {
     try {

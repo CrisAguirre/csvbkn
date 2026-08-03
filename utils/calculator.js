@@ -30,7 +30,8 @@ function calculateGlobalTotals(
   config,
   existingTotals = {},
   totalMesonesSubtotal = 0,
-  totalMesonesTax = 0
+  totalMesonesTax = 0,
+  viaticos = 0
 ) {
   const unforeseenPercent = existingTotals.unforeseenPercent ?? config.unforeseenPercent ?? 10;
   const profitPercent = existingTotals.profitPercent ?? config.profitPercent ?? 35;
@@ -47,7 +48,7 @@ function calculateGlobalTotals(
   const totalWithTax = subtotal + taxAmount;
 
   const discountAmount = totalWithTax * (discountPercent / 100);
-  const grandTotal = totalWithTax - discountAmount;
+  const grandTotal = totalWithTax - discountAmount + viaticos;
   const pricePerSqm = totalSqm > 0 ? grandTotal / totalSqm : 0;
 
   return {
@@ -66,7 +67,8 @@ function calculateGlobalTotals(
     discountAmount,
     grandTotal,
     totalSqm,
-    pricePerSqm
+    pricePerSqm,
+    viaticos
   };
 }
 
@@ -277,7 +279,8 @@ function recalculateAll(quotation, config) {
     config,
     quotation.totals || {},
     globalMesonesSubtotal,
-    globalMesonesTax
+    globalMesonesTax,
+    Number((quotation.client || {}).viaticos || 0)
   );
 
   return quotation;

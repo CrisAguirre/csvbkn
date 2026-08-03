@@ -200,7 +200,8 @@ const quotationSchema = new mongoose.Schema({
     city: { type: String, default: 'Ciudad' },
     phone: { type: String, default: '' },
     email: { type: String, default: '' },
-    address: { type: String, default: '' }
+    address: { type: String, default: '' },
+    viaticos: { type: Number, default: 0 }
   },
   title: {
     type: String,
@@ -225,7 +226,8 @@ const quotationSchema = new mongoose.Schema({
     discountAmount: { type: Number, default: 0 },
     grandTotal: { type: Number, default: 0 },
     totalSqm: { type: Number, default: 0 },
-    pricePerSqm: { type: Number, default: 0 }
+    pricePerSqm: { type: Number, default: 0 },
+    viaticos: { type: Number, default: 0 }
   },
 
   // Wizard de Configuración Inicial (FASE 0.5)
