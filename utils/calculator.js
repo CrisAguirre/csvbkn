@@ -195,6 +195,12 @@ function calculateFurnitureTotals(furniture, config) {
 }
 
 function recalculateAll(quotation, config) {
+  // Modo "Venta de productos y servicios": totales directos sobre quotation.products
+  if (quotation.wizardConfig && quotation.wizardConfig.clientPriceMode === 'products') {
+    quotation.totals = calculateProductsTotals(quotation, config);
+    return quotation;
+  }
+
   let globalTotalSqm = 0;
   let globalTotalCost = 0;
   let globalMesonesSubtotal = 0;
@@ -286,9 +292,50 @@ function recalculateAll(quotation, config) {
   return quotation;
 }
 
+function calculateProductsTotals(quotation, config) {
+  const existing = quotation.totals || {};
+  const taxPercent = existing.taxPercent ?? config.taxPercent ?? 19;
+  const viaticos = Number((quotation.client || {}).viaticos || 0);
+
+  let subtotal = 0;
+  let taxAmount = 0;
+  const products = quotation.products || [];
+  products.forEach((p) => {
+    p.totalWithTax = Math.round((p.quantity || 0) * (p.unitPriceWithTax || 0));
+    const net = p.totalWithTax / (1 + taxPercent / 100);
+    subtotal += net;
+    taxAmount += p.totalWithTax - net;
+  });
+  subtotal = Math.round(subtotal);
+  taxAmount = Math.round(taxAmount);
+  const grandTotal = subtotal + taxAmount + viaticos;
+
+  quotation.totals = {
+    totalCost: 0,
+    unforeseenPercent: existing.unforeseenPercent ?? config.unforeseenPercent ?? 10,
+    unforeseenAmount: 0,
+    profitPercent: existing.profitPercent ?? config.profitPercent ?? 35,
+    profitAmount: 0,
+    indirectPercent: existing.indirectPercent ?? config.indirectPercent ?? 32,
+    indirectAmount: 0,
+    subtotal,
+    taxPercent,
+    taxAmount,
+    totalWithTax: subtotal + taxAmount,
+    discountPercent: 0,
+    discountAmount: 0,
+    grandTotal,
+    totalSqm: 0,
+    pricePerSqm: 0,
+    viaticos
+  };
+  return quotation;
+}
+
 module.exports = {
   recalculateAll,
   getWasteFactor,
   calculateFurnitureTotals,
-  calculateGlobalTotals
+  calculateGlobalTotals,
+  calculateProductsTotals
 };

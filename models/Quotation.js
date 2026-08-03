@@ -209,6 +209,16 @@ const quotationSchema = new mongoose.Schema({
   },
   areas: [areaSchema],
 
+  // Ítems de venta de productos y servicios (clientPriceMode === 'products')
+  products: [{
+    code: { type: String, default: '' },
+    description: { type: String, default: '' },
+    unit: { type: String, default: 'UNIDAD' },
+    quantity: { type: Number, default: 1 },
+    unitPriceWithTax: { type: Number, default: 0 },
+    totalWithTax: { type: Number, default: 0 }
+  }],
+
   // Cálculos finales
   totals: {
     totalCost: { type: Number, default: 0 },
@@ -234,7 +244,7 @@ const quotationSchema = new mongoose.Schema({
   wizardConfig: {
     clientPriceMode: {
       type: String,
-      enum: ['unit_sqm', 'manual', 'outsource'],
+      enum: ['unit_sqm', 'manual', 'outsource', 'products'],
       default: 'unit_sqm'
     },
     hardwareDisplayMode: {

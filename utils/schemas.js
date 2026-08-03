@@ -41,7 +41,7 @@ const bulkUpsertSchema = z.object({
 // --- Quotation Schemas ---
 // Validación superficial para cotizaciones (dada su enorme profundidad)
 const quotationSchema = z.object({
-  clientName: z.string().min(1, 'El nombre del cliente es requerido'),
+  clientName: z.string().optional().nullable(),
   documentId: z.string().optional().nullable(),
   phone: z.string().optional().nullable(),
   address: z.string().optional().nullable(),
