@@ -16,7 +16,7 @@ const registerSchema = z.object({
 
 // --- Material Schemas ---
 const materialSchema = z.object({
-  category: z.enum(['melamina', 'canto', 'accesorio', 'herraje', 'vidrio', 'meson', 'otro'], {
+  category: z.enum(['melamina', 'canto', 'accesorio', 'herraje', 'vidrio', 'meson', 'laminado', 'compactslab', 'duraopak', 'tablero', 'otro'], {
     errorMap: () => ({ message: "Categoría inválida" })
   }),
   code: z.string().trim().optional().nullable(),
