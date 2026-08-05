@@ -139,45 +139,35 @@ function calculateFurnitureTotals(furniture, config) {
     });
   }
 
-  // 5. Cortes
-  furniture.totalCuts = 0;
-  if (furniture.cuts) {
-    furniture.cuts.forEach((c) => {
-      const workUnits = (c.sqm || 0) * (c.timeHours || 0) * (c.quantity || 1);
-      const rate = c.laborRate || laborRate;
-      c.totalPrice = workUnits * rate;
-      furniture.totalCuts += c.totalPrice;
-    });
-  }
-
-  // 6. Armado
+  // 5. M.O. Armado — minutos × cantidad × valorMinuto (× personas si aplica)
   furniture.totalAssembly = 0;
   if (furniture.assembly) {
     furniture.assembly.forEach((a) => {
-      const workUnits = (a.totalQuantity || 0) * (a.assemblyHours || 0) * (a.persons || 1);
-      const rate = a.laborRate || laborRate;
-      a.totalPrice = workUnits * rate;
+      const qty = a.totalQuantity || a.quantity || 0;
+      if (a.minutes && a.minutes > 0 && a.valorMinuto) {
+        a.totalPrice = (a.minutes || 0) * qty * (a.valorMinuto || 0) * (a.persons || 1);
+      } else {
+        const workUnits = qty * (a.assemblyHours || 0) * (a.persons || 1);
+        const rate = a.laborRate || laborRate;
+        a.totalPrice = workUnits * rate;
+      }
       furniture.totalAssembly += a.totalPrice;
     });
   }
 
-  // 7. Instalación
+  // 6. M.O. Instalación — misma lógica (minutos × cantidad × valor por minuto × personas)
   furniture.totalInstallation = 0;
   if (furniture.installation) {
     furniture.installation.forEach((i) => {
-      const workUnits = (i.totalQuantity || 0) * (i.installHours || 0) * (i.persons || 1);
-      const rate = i.laborRate || laborRate;
-      i.totalPrice = workUnits * rate;
+      const qty = i.totalQuantity || i.quantity || 0;
+      if (i.minutes && i.minutes > 0 && i.valorMinuto) {
+        i.totalPrice = (i.minutes || 0) * qty * (i.valorMinuto || 0) * (i.persons || 1);
+      } else {
+        const workUnits = qty * (i.installHours || 0) * (i.persons || 1);
+        const rate = i.laborRate || laborRate;
+        i.totalPrice = workUnits * rate;
+      }
       furniture.totalInstallation += i.totalPrice;
-    });
-  }
-
-  // 8. Enchape
-  furniture.totalVeneer = 0;
-  if (furniture.veneer) {
-    furniture.veneer.forEach((v) => {
-      v.totalPrice = (v.quantity || 0) * (v.unitPrice || 0);
-      furniture.totalVeneer += v.totalPrice;
     });
   }
 
@@ -186,10 +176,8 @@ function calculateFurnitureTotals(furniture, config) {
     (furniture.totalEdgeBands || 0) +
     (furniture.totalAccessories || 0) +
     (furniture.totalDesignTime || 0) +
-    (furniture.totalCuts || 0) +
     (furniture.totalAssembly || 0) +
-    (furniture.totalInstallation || 0) +
-    (furniture.totalVeneer || 0);
+    (furniture.totalInstallation || 0);
 
   furniture.totalBudget = furniture.totalCost;
 }
@@ -226,12 +214,6 @@ function recalculateAll(quotation, config) {
 
           if (furniture.areaSqm && furniture.areaSqm > 0) {
             globalTotalSqm += furniture.areaSqm * (furniture.quantity || 1);
-          } else if (furniture.cuts && furniture.cuts.length) {
-            const fSqm = furniture.cuts.reduce(
-              (sum, cut) => sum + (cut.sqm || 0) * (cut.quantity || 1),
-              0
-            );
-            globalTotalSqm += fSqm * (furniture.quantity || 1);
           }
         });
       }

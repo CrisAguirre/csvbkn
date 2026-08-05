@@ -15,6 +15,27 @@ const laborTimeSchema = new mongoose.Schema({
     required: true,
     default: 0
   },
+  category: {
+    type: String,
+    enum: ['armado', 'instalacion'],
+    default: ''
+  },
+  minutes: {
+    type: Number,
+    default: 0
+  },
+  valorMinuto: {
+    type: Number,
+    default: 0
+  },
+  persons: {
+    type: Number,
+    default: 1
+  },
+  quantity: {
+    type: Number,
+    default: 1
+  },
   unit: {
     type: String,
     enum: ['ML', 'M2', 'UNIDAD', 'LAMINA', 'SERVICIO'],
