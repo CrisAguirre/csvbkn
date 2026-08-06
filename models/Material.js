@@ -96,6 +96,26 @@ const materialSchema = new mongoose.Schema({
   laborMinutes: {
     type: Number,
     default: 0
+  },
+  // --- Campos específicos de CANTOS (tapacantos) ---
+  calibre: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  tipo: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  rigidez: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  moMinutesPerMl: {
+    type: Number,
+    default: 3
   }
 }, {
   timestamps: true

@@ -23,7 +23,12 @@ const edgeBandItemSchema = new mongoose.Schema({
   waste: { type: Number, default: 0 },
   total: { type: Number, default: 0 },
   unitPrice: { type: Number, default: 0 },
-  totalPrice: { type: Number, default: 0 }
+  totalPrice: { type: Number, default: 0 },
+  calibre: { type: String, default: '' },
+  tipo: { type: String, default: '' },
+  rigidez: { type: String, default: '' },
+  moMinutesPerMl: { type: Number, default: 3 },
+  moTotal: { type: Number, default: 0 }
 }, { _id: false });
 
 const accessoryItemSchema = new mongoose.Schema({

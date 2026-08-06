@@ -108,7 +108,11 @@ function calculateFurnitureTotals(furniture, config) {
       e.wasteFactor = factor;
       e.waste = (e.quantity || 0) * factor;
       e.total = (e.quantity || 0) + e.waste;
-      e.totalPrice = e.total * (e.unitPrice || 0);
+      const materialCost = e.total * (e.unitPrice || 0);
+      const valorMinuto = (config.laborRatePerHour || 0) / 60;
+      const moCosto = e.total * (e.moMinutesPerMl || 3) * valorMinuto;
+      e.moTotal = moCosto;
+      e.totalPrice = materialCost + moCosto;
       furniture.totalEdgeBands += e.totalPrice;
     });
   }

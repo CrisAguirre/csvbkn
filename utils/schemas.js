@@ -30,7 +30,11 @@ const materialSchema = z.object({
   pricePerSheet: z.number().nonnegative().optional().nullable(),
   measure1: z.number().nonnegative().optional().nullable(),
   measure2: z.number().nonnegative().optional().nullable(),
-  active: z.boolean().optional().nullable()
+  active: z.boolean().optional().nullable(),
+  calibre: z.string().trim().optional().nullable(),
+  tipo: z.string().trim().optional().nullable(),
+  rigidez: z.string().trim().optional().nullable(),
+  moMinutesPerMl: z.number().nonnegative().optional().nullable()
 });
 
 const bulkUpsertSchema = z.object({

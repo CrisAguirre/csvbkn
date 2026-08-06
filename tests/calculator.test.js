@@ -48,14 +48,16 @@ describe('Calculator Utils', () => {
     });
 
     it('debe calcular cantos con desperdicio', () => {
-      // 10 ML -> factor 0.20 -> desperdicio 2 -> total 12 ML -> precio = 12 * 1000 = 12000
+      // 10 ML -> factor 0.20 -> desperdicio 2 -> total 12 ML
+      // precio = 12 * 1000 = 12000 ; M.O. = 12 ML × 3 min × valorMinuto (12000/60=2000) = 3600
       const furniture = {
-        edgeBands: [{ quantity: 10, unitPrice: 1000 }]
+        edgeBands: [{ quantity: 10, unitPrice: 1000, moMinutesPerMl: 3 }]
       };
       calculateFurnitureTotals(furniture, mockConfig);
       expect(furniture.edgeBands[0].wasteFactor).toBe(0.20);
-      expect(furniture.totalEdgeBands).toBe(12000);
-      expect(furniture.totalCost).toBe(12000);
+      expect(furniture.edgeBands[0].moTotal).toBe(7200);
+      expect(furniture.totalEdgeBands).toBe(19200); // 12000 material + 7200 M.O.
+      expect(furniture.totalCost).toBe(19200);
     });
 
     it('debe calcular mesones correctamente', () => {
