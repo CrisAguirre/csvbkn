@@ -4,7 +4,7 @@ const XLSX = require('xlsx');
 const LaborTime = require('./models/LaborTime');
 
 const MONGODB_URI = process.env.MONGODB_URI;
-const DIR = 'C:/Users/USUARIO/Documents/My Proyects/Custom Apps/Cotizador SV';
+const DIR = 'C:/Users/USUARIO/Desktop/Cotizador SV';
 const FILES = [
   { file: `${DIR}/LISTADO M.O ARMADO.xlsx`, category: 'armado' },
   { file: `${DIR}/LISTADO M.O INSTALACIÓN.xlsx`, category: 'instalacion' }
