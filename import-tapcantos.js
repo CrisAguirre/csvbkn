@@ -26,6 +26,13 @@ function parseMo(v) {
   return n > 0 ? n : 3;
 }
 
+// Normaliza un calibre a su forma canónica "NN MM" (19 MM, 22 MM, 33 MM, 44 MM)
+// para evitar duplicados (el Excel trae mezclas como "19 MM" / "19MM", "44MM" / "44 MM").
+const normCalibre = (c) => {
+  const d = clean(c).replace(/\s+/g, '').toUpperCase().replace(/MM/g, '');
+  return d ? `${d} MM` : '';
+};
+
 // Columnas: A(col0) vacía | B(col1)=calibre/desc o tipo de grupo | C(col2)=precio o rigidez | D(col3)=tiempo MO/ML
 function buildMaterials() {
   const wb = XLSX.readFile(FILE);
@@ -79,7 +86,7 @@ function buildMaterials() {
       active: true,
       rigidez,
       tipo: esBrillante ? 'brillantesbicolor' : slug(groupTipo),
-      calibre: esBrillante ? '' : colB,
+      calibre: esBrillante ? '' : normCalibre(colB),
       moMinutesPerMl: parseMo(colD)
     });
   }
