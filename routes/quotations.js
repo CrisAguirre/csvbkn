@@ -10,6 +10,35 @@ const { quotationSchema, updateQuotationStatusSchema } = require('../utils/schem
 
 router.use(authMiddleware);
 
+// El frontend envía '' (string vacío) para campos del wizard aún no configurados
+// (p. ej. `pricingTier` en modo "Ingreso manual") y para `mesonDetails.materialId`
+// cuando el mesón no tiene material. Esos valores hacen fallar los enums y el
+// cast a ObjectId de Mongoose (400). Se limpian antes de construir el documento.
+function normalizeQuotation(data) {
+  if (!data || typeof data !== 'object') return data;
+
+  const wizardEnumFields = ['clientPriceMode', 'hardwareDisplayMode', 'moTimeMode', 'areaDisplayMode', 'mesonMode', 'pricingTier'];
+  if (data.wizardConfig) {
+    wizardEnumFields.forEach((field) => {
+      if (data.wizardConfig[field] === '') delete data.wizardConfig[field];
+    });
+  }
+
+  if (Array.isArray(data.areas)) {
+    data.areas.forEach((area) => {
+      if (area && Array.isArray(area.furniture)) {
+        area.furniture.forEach((furniture) => {
+          if (furniture && furniture.mesonDetails && furniture.mesonDetails.materialId === '') {
+            delete furniture.mesonDetails.materialId;
+          }
+        });
+      }
+    });
+  }
+
+  return data;
+}
+
 // GET /api/quotations - Listar cotizaciones
 router.get('/', async (req, res) => {
   try {
@@ -114,6 +143,8 @@ router.get('/:id', async (req, res) => {
 // POST /api/quotations - Crear cotización
 router.post('/', validate(quotationSchema), async (req, res) => {
   try {
+    normalizeQuotation(req.body);
+
     // Obtener siguiente número
     const config = await Config.findOneAndUpdate(
       { key: 'global' },
@@ -169,6 +200,7 @@ router.put('/:id', validate(quotationSchema), async (req, res) => {
     }
 
     const updateData = { ...req.body };
+    normalizeQuotation(updateData);
     delete updateData.number; // No permitir cambiar el número
     delete updateData.createdBy;
 

@@ -49,7 +49,7 @@ const quotationSchema = z.object({
   documentId: z.string().optional().nullable(),
   phone: z.string().optional().nullable(),
   address: z.string().optional().nullable(),
-  status: z.enum(['nuevo', 'borrador', 'enviado', 'aprobado', 'rechazado', 'completado']).optional(),
+  status: z.enum(['nuevo', 'borrador', 'en_revision', 'auditada', 'enviada', 'aceptada', 'aprobada', 'rechazada', 'archivada_aceptada', 'archivada_rechazada']).optional(),
   validityDays: z.number().int().positive().optional().nullable(),
   paymentTerms: z.string().optional().nullable(),
   areas: z.array(z.any()).optional().nullable(),
@@ -57,7 +57,7 @@ const quotationSchema = z.object({
 });
 
 const updateQuotationStatusSchema = z.object({
-  status: z.enum(['nuevo', 'borrador', 'enviado', 'aprobado', 'rechazado', 'completado'], {
+  status: z.enum(['nuevo', 'borrador', 'en_revision', 'auditada', 'enviada', 'aceptada', 'aprobada', 'rechazada', 'archivada_aceptada', 'archivada_rechazada'], {
     errorMap: () => ({ message: "Estado de cotización inválido" })
   })
 });
