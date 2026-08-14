@@ -194,7 +194,6 @@ function recalculateAll(quotation, config) {
   }
 
   let globalTotalSqm = 0;
-  let globalTotalCost = 0;
   let globalMesonesSubtotal = 0;
   let globalMesonesTax = 0;
 

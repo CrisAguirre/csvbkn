@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node index.js",
     "test": "jest",
+    "lint": "eslint .",
     "seed:export": "node seed.js export",
     "seed:import": "node seed.js import"
   },
@@ -36,6 +37,9 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.8.1",
+    "globals": "^17.11.0",
     "jest": "^30.4.2"
   }
 }
