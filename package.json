@@ -23,6 +23,7 @@
   },
   "homepage": "https://github.com/CrisAguirre/csvbkn#readme",
   "dependencies": {
+    "@e965/xlsx": "^0.20.3",
     "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
@@ -33,7 +34,6 @@
     "morgan": "^1.11.0",
     "winston": "^3.19.0",
     "winston-daily-rotate-file": "^5.0.0",
-    "xlsx": "^0.18.5",
     "zod": "^4.4.3"
   },
   "devDependencies": {

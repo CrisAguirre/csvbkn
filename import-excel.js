@@ -1,7 +1,7 @@
 require('dotenv').config();
 const mongoose = require('mongoose');
 const path = require('path');
-const XLSX = require('xlsx');
+const XLSX = require('@e965/xlsx');
 const Material = require('./models/Material');
 
 const MONGODB_URI = process.env.MONGODB_URI;
