@@ -203,6 +203,9 @@ router.put('/:id', validate(quotationSchema), async (req, res) => {
     normalizeQuotation(updateData);
     delete updateData.number; // No permitir cambiar el número
     delete updateData.createdBy;
+    delete updateData._id; // Prevenir error de Mongoose al modificar el _id
+    delete updateData.createdAt;
+    delete updateData.updatedAt;
 
     Object.assign(quotation, updateData);
 
