@@ -106,10 +106,20 @@ function calculateFurnitureTotals(furniture, config) {
 
   // 1. Insumos
   furniture.totalSupplies = 0;
+  const valorMinuto = (config.laborRatePerHour || 0) / 60;
   if (furniture.supplies) {
     furniture.supplies.forEach((s) => {
       const qty = s.total > 0 ? s.total : (s.quantity || 0);
-      s.totalPrice = qty * (s.unitPrice || 0);
+      let effectiveUnitPrice = s.unitPrice || 0;
+
+      if (s.quantityMode === 'sqm' && (s._sqmPerSheet || 0) > 0 && (s._laborMinutes || 0) > 0) {
+        const minutes = (qty * (s._laborMinutes || 0)) / (s._sqmPerSheet || 1);
+        const laborCost = minutes * valorMinuto;
+        const laborPerSqm = qty > 0 ? laborCost / qty : 0;
+        effectiveUnitPrice = effectiveUnitPrice + laborPerSqm;
+      }
+
+      s.totalPrice = qty * effectiveUnitPrice;
       furniture.totalSupplies += s.totalPrice;
     });
   }
@@ -123,7 +133,6 @@ function calculateFurnitureTotals(furniture, config) {
       e.waste = (e.quantity || 0) * factor;
       e.total = (e.quantity || 0) + e.waste;
       const materialCost = e.total * (e.unitPrice || 0);
-      const valorMinuto = (config.laborRatePerHour || 0) / 60;
       const moCosto = e.total * (e.moMinutesPerMl || 3) * valorMinuto;
       e.moTotal = moCosto;
       e.totalPrice = materialCost + moCosto;
@@ -136,8 +145,9 @@ function calculateFurnitureTotals(furniture, config) {
   if (furniture.accessories) {
     furniture.accessories.forEach((a) => {
       a.totalTime = (a.quantity || 0) * (a.timeHours || 0);
+      const effectiveUnitPrice = (a.unitPrice || 0) * (a.apply5Percent ? 1.05 : 1);
       const laborCost = a.totalTime * (a.laborRate || laborRate);
-      const materialCost = (a.quantity || 0) * (a.unitPrice || 0);
+      const materialCost = (a.quantity || 0) * effectiveUnitPrice;
       a.totalPrice = laborCost + materialCost;
       furniture.totalAccessories += a.totalPrice;
     });

@@ -11,7 +11,9 @@ const supplyItemSchema = new mongoose.Schema({
   quantity: { type: Number, default: 0 },
   total: { type: Number, default: 0 },
   unitPrice: { type: Number, default: 0 },
-  totalPrice: { type: Number, default: 0 }
+  totalPrice: { type: Number, default: 0 },
+  _laborMinutes: { type: Number, default: 0 },
+  _sqmPerSheet: { type: Number, default: 0 }
 }, { _id: false });
 
 const edgeBandItemSchema = new mongoose.Schema({

@@ -57,6 +57,16 @@ router.post('/', authMiddleware, async (req, res) => {
   }
 });
 
+// Eliminar TODAS las cotizaciones temporales (limpieza)
+router.delete('/all/cleanup', authMiddleware, async (req, res) => {
+  try {
+    const result = await Temporal.deleteMany({});
+    res.json({ success: true, message: `${result.deletedCount} temporales eliminados` });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 // Eliminar una cotización temporal
 router.delete('/:id', authMiddleware, async (req, res) => {
   try {
