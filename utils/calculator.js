@@ -24,6 +24,20 @@ function getWasteFactor(quantity, wasteTable) {
   return 0;
 }
 
+function parseMeasurement(measurement) {
+  if (!measurement) return 1;
+  const str = String(measurement).replace(/,/g, '.').toLowerCase();
+  if (str.includes('x') || str.includes('*')) {
+    const parts = str.split(/x|\*/);
+    const p1 = parseFloat(parts[0]);
+    const p2 = parseFloat(parts[1]);
+    if (!isNaN(p1) && !isNaN(p2)) return p1 * p2;
+    return parseFloat(parts[0]) || 1;
+  }
+  const val = parseFloat(str);
+  return isNaN(val) ? 1 : val;
+}
+
 function calculateGlobalTotals(
   totalCost,
   totalSqm,
@@ -143,15 +157,22 @@ function calculateFurnitureTotals(furniture, config) {
     });
   }
 
-  // 5. M.O. Armado — minutos × cantidad × valorMinuto (× personas si aplica)
+  // 5. M.O. Armado — total = minutos calculados × valor del minuto (× personas si aplica)
   furniture.totalAssembly = 0;
   if (furniture.assembly) {
     furniture.assembly.forEach((a) => {
-      const qty = a.totalQuantity || a.quantity || 0;
-      if (a.minutes && a.minutes > 0 && a.valorMinuto) {
-        a.totalPrice = (a.minutes || 0) * qty * (a.valorMinuto || 0) * (a.persons || 1);
+      const parsedMedida = parseMeasurement(a.measurement);
+      const baseQty = a.baseQuantity || 1;
+      const baseMin = a.minutes || 0;
+
+      if (baseMin > 0 && a.valorMinuto) {
+        const calcMin = (parsedMedida * baseMin) / baseQty;
+        a.calculatedMinutes = calcMin;
+        const mult = (a.persons || 1);
+        a.totalPrice = calcMin * (a.valorMinuto || 0) * mult;
       } else {
-        const workUnits = qty * (a.assemblyHours || 0) * (a.persons || 1);
+        // Fallback fórmula legado
+        const workUnits = parsedMedida * (a.assemblyHours || 0) * (a.persons || 1);
         const rate = a.laborRate || laborRate;
         a.totalPrice = workUnits * rate;
       }
@@ -159,15 +180,21 @@ function calculateFurnitureTotals(furniture, config) {
     });
   }
 
-  // 6. M.O. Instalación — misma lógica (minutos × cantidad × valor por minuto × personas)
+  // 6. M.O. Instalación — misma lógica
   furniture.totalInstallation = 0;
   if (furniture.installation) {
     furniture.installation.forEach((i) => {
-      const qty = i.totalQuantity || i.quantity || 0;
-      if (i.minutes && i.minutes > 0 && i.valorMinuto) {
-        i.totalPrice = (i.minutes || 0) * qty * (i.valorMinuto || 0) * (i.persons || 1);
+      const parsedMedida = parseMeasurement(i.measurement);
+      const baseQty = i.baseQuantity || 1;
+      const baseMin = i.minutes || 0;
+
+      if (baseMin > 0 && i.valorMinuto !== undefined) {
+        const calcMin = (parsedMedida * baseMin) / baseQty;
+        i.calculatedMinutes = calcMin;
+        const mult = (i.persons || 1);
+        i.totalPrice = calcMin * (i.valorMinuto || 0) * mult;
       } else {
-        const workUnits = qty * (i.installHours || 0) * (i.persons || 1);
+        const workUnits = parsedMedida * (i.installHours || 0) * (i.persons || 1);
         const rate = i.laborRate || laborRate;
         i.totalPrice = workUnits * rate;
       }
