@@ -219,7 +219,8 @@ router.put('/:id', validate(quotationSchema), async (req, res) => {
 
     const updateData = { ...req.body };
     normalizeQuotation(updateData);
-    delete updateData.number; // No permitir cambiar el número
+    // Permitir actualizar el número si el frontend lo envía modificado
+    // delete updateData.number;
     delete updateData.createdBy;
     delete updateData._id; // Prevenir error de Mongoose al modificar el _id
     delete updateData.createdAt;
@@ -236,6 +237,7 @@ router.put('/:id', validate(quotationSchema), async (req, res) => {
     quotation.markModified('areas');
     quotation.markModified('totals');
     quotation.markModified('wizardConfig');
+    quotation.markModified('products');
 
     await quotation.save();
 
