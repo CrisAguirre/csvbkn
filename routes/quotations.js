@@ -145,12 +145,30 @@ router.post('/', validate(quotationSchema), async (req, res) => {
   try {
     normalizeQuotation(req.body);
 
-    // Obtener siguiente número
-    const config = await Config.findOneAndUpdate(
-      { key: 'global' },
-      { $inc: { nextQuotationNumber: 1 } },
-      { new: false }
-    );
+    let config;
+    let finalNumber = req.body.number;
+
+    if (finalNumber && finalNumber > 0) {
+      // Usar el número digitado por el operario
+      config = await Config.findOne({ key: 'global' });
+      if (config && finalNumber >= config.nextQuotationNumber) {
+        // Actualizar el consecutivo si el digitado es mayor o igual
+        await Config.findOneAndUpdate(
+          { key: 'global' },
+          { $set: { nextQuotationNumber: Number(finalNumber) + 1 } }
+        );
+      }
+    } else {
+      // Obtener siguiente número si no se digitó ninguno
+      config = await Config.findOneAndUpdate(
+        { key: 'global' },
+        { $inc: { nextQuotationNumber: 1 } },
+        { new: false }
+      );
+      if (config) {
+        finalNumber = config.nextQuotationNumber;
+      }
+    }
 
     if (!config) {
       return res.status(500).json({ success: false, message: 'Error al obtener número de cotización.' });
@@ -158,7 +176,7 @@ router.post('/', validate(quotationSchema), async (req, res) => {
 
     const quotationData = {
       ...req.body,
-      number: config.nextQuotationNumber,
+      number: finalNumber,
       createdBy: req.user.id,
       paymentTerms: req.body.paymentTerms || config.paymentTerms,
       validityDays: req.body.validityDays || config.validityDays
@@ -207,13 +225,17 @@ router.put('/:id', validate(quotationSchema), async (req, res) => {
     delete updateData.createdAt;
     delete updateData.updatedAt;
 
-    Object.assign(quotation, updateData);
+    quotation.set(updateData);
 
     // Forzar cálculo seguro en el backend
     const config = await Config.findOne({ key: 'global' });
     if (config) {
       recalculateAll(quotation, config);
     }
+
+    quotation.markModified('areas');
+    quotation.markModified('totals');
+    quotation.markModified('wizardConfig');
 
     await quotation.save();
 
