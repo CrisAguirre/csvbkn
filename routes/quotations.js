@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Quotation = require('../models/Quotation');
+const ManualEntry = require('../models/ManualEntry');
 const Config = require('../models/Config');
 const { authMiddleware, requireAdmin } = require('../middleware/auth');
 const { recalculateAll } = require('../utils/calculator');
@@ -38,6 +39,51 @@ function normalizeQuotation(data) {
 
   return data;
 }
+
+async function extractAndSaveManualEntries(data, quotationId) {
+  if (!data || !Array.isArray(data.areas)) return;
+
+  const entries = [];
+
+  data.areas.forEach((area) => {
+    if (area && Array.isArray(area.furniture)) {
+      area.furniture.forEach((furn) => {
+        const checkAndExtract = (list, categoryName) => {
+          if (Array.isArray(list)) {
+            list.forEach(item => {
+              if (item._isManual) {
+                // Remove the volatile flag for the saved details (optional but cleaner)
+                const details = { ...item };
+                delete details._isManual;
+                entries.push({
+                  quotationId,
+                  category: categoryName,
+                  description: item.description || 'Sin descripción',
+                  details
+                });
+              }
+            });
+          }
+        };
+
+        checkAndExtract(furn.supplies, 'insumo');
+        checkAndExtract(furn.edgeBands, 'canto');
+        checkAndExtract(furn.accessories, 'accesorio');
+        checkAndExtract(furn.assembly, 'armado');
+        checkAndExtract(furn.installation, 'instalacion');
+      });
+    }
+  });
+
+  if (entries.length > 0) {
+    try {
+      await ManualEntry.insertMany(entries);
+    } catch (e) {
+      logger.error('Error saving manual entries:', e);
+    }
+  }
+}
+
 
 // GET /api/quotations - Listar cotizaciones
 router.get('/', async (req, res) => {
@@ -188,6 +234,9 @@ router.post('/', validate(quotationSchema), async (req, res) => {
     const quotation = new Quotation(quotationData);
     await quotation.save();
 
+    // Guardar entradas manuales
+    await extractAndSaveManualEntries(req.body, quotation._id);
+
     res.status(201).json({
       success: true,
       data: quotation,
@@ -240,6 +289,9 @@ router.put('/:id', validate(quotationSchema), async (req, res) => {
     quotation.markModified('products');
 
     await quotation.save();
+
+    // Guardar entradas manuales (se duplicarían si editan lo mismo, lo ideal es guardarlas como log)
+    await extractAndSaveManualEntries(req.body, quotation._id);
 
     res.json({ success: true, data: quotation, message: 'Cotización actualizada exitosamente.' });
   } catch (error) {

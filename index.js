@@ -23,6 +23,7 @@ const configRoutes = require('./routes/config');
 const quotationsRoutes = require('./routes/quotations');
 const laborRoutes = require('./routes/labor');
 const temporalsRoutes = require('./routes/temporals');
+const manualEntriesRoutes = require('./routes/manualEntries');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -237,6 +238,7 @@ app.use('/api/config', configRoutes);
 app.use('/api/quotations', quotationsRoutes);
 app.use('/api/labor-times', laborRoutes);
 app.use('/api/temporals', temporalsRoutes);
+app.use('/api/manual-entries', manualEntriesRoutes);
 
 // Actividad Endpoint
 app.get('/api/activities', authMiddleware, requireAdmin, async (req, res) => {
