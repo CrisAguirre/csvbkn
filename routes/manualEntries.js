@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const ManualEntry = require('../models/ManualEntry');
-const { requireAuth } = require('../utils/auth');
+const { authMiddleware } = require('../middleware/auth');
 
 // GET /api/manual-entries - Obtener lista de registros manuales
-router.get('/', requireAuth, async (req, res) => {
+router.get('/', authMiddleware, async (req, res) => {
   try {
     const { category, search, page = 1, limit = 50 } = req.query;
     let query = {};
@@ -44,7 +44,7 @@ router.get('/', requireAuth, async (req, res) => {
 });
 
 // DELETE /api/manual-entries/:id - Eliminar un registro si ya no se necesita
-router.delete('/:id', requireAuth, async (req, res) => {
+router.delete('/:id', authMiddleware, async (req, res) => {
   try {
     const entry = await ManualEntry.findByIdAndDelete(req.params.id);
     if (!entry) {
