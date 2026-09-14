@@ -134,6 +134,14 @@ mongoose.connect(MONGODB_URI)
     } catch (configError) {
       console.error('Error seeding config:', configError);
     }
+
+    // Auto-seed COMPAC mesones (solo si no existen)
+    try {
+      const seedCompacMesones = require('./seed-compac-mesones');
+      await seedCompacMesones();
+    } catch (compacError) {
+      console.error('Error seeding COMPAC mesones:', compacError);
+    }
   })
   .catch((err) => {
     logger.error('MongoDB connection error: ' + err.message);
