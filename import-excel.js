@@ -128,7 +128,7 @@ async function importCompac() {
     const finish = r[4] ? String(r[4]).trim() : '';
     const desc = `${product} ${ref} ${dimension}${finish ? ' ' + finish : ''}${core ? ' ' + core : ''}`.trim();
     bulk.push({
-      category: 'compactslab',
+      category: 'meson',
       code: ref,
       description: desc,
       provider: 'LAMITECH',
