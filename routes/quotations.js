@@ -15,8 +15,31 @@ router.use(authMiddleware);
 // (p. ej. `pricingTier` en modo "Ingreso manual") y para `mesonDetails.materialId`
 // cuando el mesón no tiene material. Esos valores hacen fallar los enums y el
 // cast a ObjectId de Mongoose (400). Se limpian antes de construir el documento.
+function stripTransientKeys(obj) {
+  if (Array.isArray(obj)) {
+    obj.forEach(stripTransientKeys);
+    return;
+  }
+  if (obj && typeof obj === 'object') {
+    for (const key of Object.keys(obj)) {
+      if (key.startsWith('_')) {
+        delete obj[key];
+      } else {
+        stripTransientKeys(obj[key]);
+      }
+    }
+  }
+}
+
 function normalizeQuotation(data) {
   if (!data || typeof data !== 'object') return data;
+
+  // Limpiar transitorios del wizard (_lamina, _canto, _activity, _isManual, etc.)
+  stripTransientKeys(data);
+  delete data._id;
+  delete data.__v;
+  delete data.createdAt;
+  delete data.updatedAt;
 
   const wizardEnumFields = ['clientPriceMode', 'hardwareDisplayMode', 'moTimeMode', 'areaDisplayMode', 'mesonMode', 'pricingTier'];
   if (data.wizardConfig) {
@@ -220,6 +243,33 @@ router.post('/', validate(quotationSchema), async (req, res) => {
       return res.status(500).json({ success: false, message: 'Error al obtener número de cotización.' });
     }
 
+    // UPSERT: si ya existe una cotizacion con ese numero, sobrescribirla
+    const existingByNumber = await Quotation.findOne({ number: finalNumber });
+    if (existingByNumber) {
+      if (req.user.role === 'designer' && existingByNumber.createdBy.toString() !== req.user.id) {
+        return res.status(403).json({ success: false, message: 'Ya existe la cotizacion No.' + finalNumber + ' de otro usuario.' });
+      }
+      const updateData = { ...req.body, number: finalNumber };
+      delete updateData.createdBy;
+      delete updateData._id;
+      delete updateData.createdAt;
+      delete updateData.updatedAt;
+      existingByNumber.set(updateData);
+      const cfg2 = config || await Config.findOne({ key: 'global' });
+      if (cfg2) recalculateAll(existingByNumber, cfg2);
+      existingByNumber.markModified('areas');
+      existingByNumber.markModified('totals');
+      existingByNumber.markModified('wizardConfig');
+      existingByNumber.markModified('products');
+      await existingByNumber.save();
+      await extractAndSaveManualEntries(req.body, existingByNumber._id);
+      return res.status(200).json({
+        success: true,
+        data: existingByNumber,
+        message: `Cotizacion No.${finalNumber} sobrescrita exitosamente.`
+      });
+    }
+
     const quotationData = {
       ...req.body,
       number: finalNumber,
@@ -228,7 +278,6 @@ router.post('/', validate(quotationSchema), async (req, res) => {
       validityDays: req.body.validityDays || config.validityDays
     };
 
-    // Forzar cálculo seguro en el backend
     recalculateAll(quotationData, config);
 
     const quotation = new Quotation(quotationData);
