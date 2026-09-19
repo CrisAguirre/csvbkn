@@ -1,6 +1,15 @@
 const winston = require('winston');
 const DailyRotateFile = require('winston-daily-rotate-file');
+const fs = require('fs');
 const path = require('path');
+
+// Render tiene FS efímero: asegurar que logs/ existe para no crashear antes del listen
+const logsDir = path.join(__dirname, '../logs');
+try {
+  fs.mkdirSync(logsDir, { recursive: true });
+} catch (e) {
+  console.error('No se pudo crear logs/:', e.message);
+}
 
 const logFormat = winston.format.combine(
   winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
@@ -39,11 +48,10 @@ const logger = winston.createLogger({
   ]
 });
 
-// En desarrollo también imprimimos a la consola
-if (process.env.NODE_ENV !== 'production') {
-  logger.add(new winston.transports.Console({
-    format: consoleFormat
-  }));
-}
+// En producción (Render) TAMBIÉN loguear a consola: si solo hay file transport,
+// Render no muestra nada y el "Timed Out" es imposible de diagnosticar.
+logger.add(new winston.transports.Console({
+  format: consoleFormat
+}));
 
 module.exports = logger;

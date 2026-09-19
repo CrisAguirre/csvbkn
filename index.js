@@ -27,11 +27,13 @@ const manualEntriesRoutes = require('./routes/manualEntries');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const HOST = '0.0.0.0'; // Render exige bind a 0.0.0.0, no localhost
 const SECRET_KEY = process.env.JWT_SECRET;
 const MONGODB_URI = process.env.MONGODB_URI;
 
 if (!SECRET_KEY || !MONGODB_URI) {
   console.error("FATAL ERROR: JWT_SECRET or MONGODB_URI is missing from environment variables.");
+  console.error("En Render: Dashboard → Environment → agregar JWT_SECRET y MONGODB_URI.");
   process.exit(1);
 }
 
@@ -47,9 +49,21 @@ app.use(morgan(morganFormat, {
   }
 }));
 
-// Database connection
-mongoose.connect(MONGODB_URI)
-  .then(async () => {
+// Healthchecks para Render: responde 200 sin tocar Mongo (evita "Timed Out")
+app.get('/', (req, res) => {
+    res.json({ success: true, service: 'csvbkn', ts: Date.now() });
+});
+app.get('/api/health', (req, res) => {
+    const state = mongoose.connection.readyState; // 0=disconnected 1=connected 2=connecting 3=disconnecting
+    res.json({ success: true, mongoState: state, ts: Date.now() });
+});
+
+// Database connection — en background DESPUÉS del listen para no bloquear el bind del puerto.
+// Antes el connect+seeds corría antes del listen y cualquier cuelgue (Atlas IP whitelist,
+// DNS, bcrypt) hacía que Render marcara "Timed Out".
+async function connectDB() {
+  try {
+    await mongoose.connect(MONGODB_URI, { serverSelectionTimeoutMS: 10000 });
     console.log('Connected to MongoDB (spaziovitale)');
     
     // Cleanup old admins
@@ -142,10 +156,11 @@ mongoose.connect(MONGODB_URI)
     } catch (compacError) {
       console.error('Error seeding COMPAC mesones:', compacError);
     }
-  })
-  .catch((err) => {
+  } catch (err) {
     logger.error('MongoDB connection error: ' + err.message);
-  });
+    console.error('MongoDB connection error: ' + err.message);
+  }
+}
 
 // Endpoint de "despertado" - responde rápido para calentar el server cuando carga la página de login
 app.get('/api/ping', (req, res) => {
@@ -275,6 +290,12 @@ app.post('/api/logout', authMiddleware, async (req, res) => {
     }
 });
 
-app.listen(PORT, () => {
-    logger.info(`Backend server running on http://localhost:${PORT}`);
+// Bind primero (Render exige puerto abierto en <60s), Mongo después en background.
+const server = app.listen(PORT, HOST, () => {
+    const msg = `Backend server running on http://${HOST}:${PORT}`;
+    logger.info(msg);
+    console.log(msg);
+    connectDB();
 });
+
+module.exports = { app, server };

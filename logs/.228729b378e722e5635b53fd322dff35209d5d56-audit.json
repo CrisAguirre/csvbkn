@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "C:\\Users\\USUARIO\\Desktop\\Done\\csv\\csvbkn\\logs\\.228729b378e722e5635b53fd322dff35209d5d56-audit.json",
+    "files": [
+        {
+            "date": 1789808573213,
+            "name": "C:\\Users\\USUARIO\\Desktop\\Done\\csv\\csvbkn\\logs\\error-2026-09-19.log",
+            "hash": "e268c4cb894d03b7a26f47ef637c511f849f08a1f41b3082106b6615d11d6bc0"
+        }
+    ],
+    "hashType": "sha256"
+}

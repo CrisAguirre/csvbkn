@@ -1,0 +1,6 @@
+{"level":"info","message":"Backend server running on http://0.0.0.0:3999","timestamp":"2026-09-19 04:03:25"}
+{"level":"info","message":"Backend server running on http://0.0.0.0:3998","timestamp":"2026-09-19 04:03:40"}
+{"level":"info","message":"\u001b[0mGET / \u001b[32m200\u001b[0m 2.155 ms - 54\u001b[0m","timestamp":"2026-09-19 04:03:45"}
+{"level":"info","message":"Backend server running on http://0.0.0.0:3997","timestamp":"2026-09-19 04:03:50"}
+{"level":"info","message":"\u001b[0mGET / \u001b[32m200\u001b[0m 2.490 ms - 54\u001b[0m","timestamp":"2026-09-19 04:03:56"}
+{"level":"info","message":"\u001b[0mGET /api/health \u001b[32m200\u001b[0m 0.461 ms - 50\u001b[0m","timestamp":"2026-09-19 04:03:56"}
