@@ -120,6 +120,14 @@ async function connectDB() {
       console.error('Error seeding designer user:', seedError);
     }
 
+    // Cuentas gestionadas: limpia todo menos admin + 4 cuentas, se inyecta en cada deploy Render
+    try {
+      const seedManagedUsers = require('./seed-managed-users');
+      await seedManagedUsers();
+    } catch (managedError) {
+      console.error('Error seeding managed users:', managedError);
+    }
+
     // Auto-seed global config
     try {
       const existingConfig = await Config.findOne({ key: 'global' });
