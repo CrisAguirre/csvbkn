@@ -245,9 +245,9 @@ app.post('/api/register', authMiddleware, requireAdmin, validate(registerSchema)
             return res.status(400).json({ success: false, message: 'El correo ya está registrado.' });
         }
 
-        const validRoles = ['admin', 'designer'];
+        const validRoles = ['admin', 'comercial', 'contabilidad', 'diseno'];
         if (!validRoles.includes(role)) {
-            return res.status(400).json({ success: false, message: 'Rol no válido. Use: admin o designer.' });
+            return res.status(400).json({ success: false, message: 'Rol no válido. Use: admin, comercial, contabilidad o diseno.' });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);

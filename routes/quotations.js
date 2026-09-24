@@ -114,8 +114,8 @@ router.get('/', async (req, res) => {
     const { status, search, page = 1, limit = 20, sort = '-createdAt' } = req.query;
     const filter = {};
 
-    // Diseñadores solo ven sus cotizaciones, admin ve todas
-    if (req.user.role === 'designer') {
+    // Roles no-admin solo ven sus cotizaciones, admin ve todas
+    if (req.user.role !== 'admin') {
       filter.createdBy = req.user.id;
     }
 
@@ -160,7 +160,7 @@ router.get('/stats', async (req, res) => {
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
     const filter = {};
-    if (req.user.role === 'designer') {
+    if (req.user.role !== 'admin') {
       filter.createdBy = req.user.id;
     }
 
@@ -246,7 +246,7 @@ router.post('/', validate(quotationSchema), async (req, res) => {
     // UPSERT: si ya existe una cotizacion con ese numero, sobrescribirla
     const existingByNumber = await Quotation.findOne({ number: finalNumber });
     if (existingByNumber) {
-      if (req.user.role === 'designer' && existingByNumber.createdBy.toString() !== req.user.id) {
+      if (req.user.role !== 'admin' && existingByNumber.createdBy.toString() !== req.user.id) {
         return res.status(403).json({ success: false, message: 'Ya existe la cotizacion No.' + finalNumber + ' de otro usuario.' });
       }
       const updateData = { ...req.body, number: finalNumber };
@@ -305,8 +305,8 @@ router.put('/:id', validate(quotationSchema), async (req, res) => {
       return res.status(404).json({ success: false, message: 'Cotización no encontrada.' });
     }
 
-    // Diseñadores solo pueden editar borradores propios
-    if (req.user.role === 'designer') {
+    // Roles no-admin solo pueden editar borradores propios
+    if (req.user.role !== 'admin') {
       if (quotation.createdBy.toString() !== req.user.id) {
         return res.status(403).json({ success: false, message: 'No tiene permisos para editar esta cotización.' });
       }

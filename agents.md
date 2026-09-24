@@ -1,7 +1,7 @@
 # agents.md — Cotizador Spazio Vitale (full-stack)
 
 > Archivo de contexto para futuras sesiones de IA. Backend `csvbkn` + Frontend `cotizadorspaziovitale`.
-> Última actualización: 2026-09-18. Fix aplicado: Guardar con sobrescritura por número.
+> Última actualización: 2026-09-24. Roles: `admin|comercial|contabilidad|diseno` (antes `designer` genérico). Header/activity muestran etiquetas ES. `price-list` con `roleGuard` admin.
 
 ## 1. Dónde está todo
 
@@ -47,13 +47,14 @@ Sin `JWT_SECRET` o `MONGODB_URI` → `process.exit(1)`. TZ forzada a `America/Bo
 - `cors({origin:true, credentials:true}) + cookieParser() + express.json({limit:'10mb'}) + morgan→winston`
 - Conexión `mongoose.connect(MONGODB_URI)` + seeds al conectar:
   - borra admin viejo `krontroth@gmail.com`
-  - crea admin/designer si no existen (bcrypt 10)
+  - crea admin si no existe (bcrypt 10); si `DESIGNER_*` está seteado crea legacy `designer` (luego lo purga el seed gestionado si no está en la lista)
+  - `seed-managed-users.js` (2026-09-24): purga todo usuario fuera de `[spaziovitale.gerencia@gmail.com + 4 gestionadas]` y crea/resetea `comercial@=comercial, contabilidad1/2@=contabilidad, diseno@=diseno` (bcrypt 10). Roles válidos: `admin|comercial|contabilidad|diseno`
   - crea `Config{key:'global'}` si no existe: labor 12495, design 16780, imprev 10%, utilidad 35%, indirectos 32%, IVA 19%, descuento 10%, next 2700, wasteTable [1-10:0.5, 11-30:0.35, 31-50:0.3, 51-100:0.25]
   - `require('./seed-compac-mesones')()`
 - Rutas directas:
   - `GET /api/ping` → `{success, ts}` calentar Render
   - `POST /api/login` (zod `loginSchema`) → bcrypt compare, JWT 8h `{id,email,role}`, cookie `token httpOnly secure sameSite:none maxAge 8h`, crea `Activity{login}`, devuelve `{user, expiresAt}`
-  - `POST /api/register` solo `authMiddleware+requireAdmin` (roles `admin|designer`)
+  - `POST /api/register` solo `authMiddleware+requireAdmin` (roles `admin|comercial|contabilidad|diseno`)
   - `GET /api/activities` solo admin, últimas 100
   - `POST /api/logout` → crea `Activity{logout}`, `clearCookie`
 - `app.use('/api/materials'|'config'|'quotations'|'labor-times'|'temporals'|'manual-entries')`
@@ -65,7 +66,7 @@ Sin `JWT_SECRET` o `MONGODB_URI` → `process.exit(1)`. TZ forzada a `America/Bo
 
 ### 2.5 Modelos (`models/`)
 
-- `User{email unique, password hash, role: admin|designer}`
+- `User{email unique, password hash, role: admin|comercial|contabilidad|diseno}` (legacy `designer` puede existir en logs viejos; tratar como no-admin)
 - `Config{key:'global' unique, laborRatePerHour, designRatePerHour, unforeseenPercent, profitPercent, indirectPercent, taxPercent, defaultDiscount, nextQuotationNumber, wasteTable[{minMl,maxMl,factor}], paymentTerms, validityDays, companyName, city}`
 - `Material{category: melamina|canto|accesorio|herraje|vidrio|meson|laminado|compactslab|duraopak|tablero|otro, code, description required, provider, brand, color, dimension, unit: LAMINA|ML|UNIDAD|... , unitPrice, pricePerSheet, measure1/2, sqmPerSheet, pricePerSqm, active, calibre, tipo, rigidez, moMinutesPerMl}`
 - `Quotation{number unique required, date, city, installationAddress, sameAddress, client{name required,city,phone,email,address,viaticos}, title, areas[areaSchema], products[{code,description,unit,quantity,unitPriceWithTax,totalWithTax}], totals{...grandTotal,viaticos}, wizardConfig{clientPriceMode: unit_sqm|manual|outsource|products, hardwareDisplayMode, moTimeMode, requiresDesignFiles, areaDisplayMode, mesonMode, pricingTier, wizardCompleted}, status: nuevo|borrador|en_revision|auditada|enviada|aceptada|aprobada|rechazada|archivada_* , paymentTerms, validityDays, notes, createdBy ref User}` + subesquemas `supply|edgeBand|accessory|designTime|cut|assembly|installation|veneer|mesonDetails|furniture|subArea|visibleAccessory`
@@ -78,11 +79,11 @@ Sin `JWT_SECRET` o `MONGODB_URI` → `process.exit(1)`. TZ forzada a `America/Bo
 
 | Base | Método/Ruta | Auth | Notas |
 |---|---|---|---|
-| `/api/quotations` | `GET /?status,search,page,limit,sort` | sí, designer solo ve `createdBy=self` | select resumido + populate, `search` por `client.name` regex o `number` |
+| `/api/quotations` | `GET /?status,search,page,limit,sort` | sí, no-admin solo ve `createdBy=self` | select resumido + populate, `search` por `client.name` regex o `number` |
 | | `GET /stats` | sí | counts + sum `totals.grandTotal` mes/histórico |
 | | `GET /:id` | sí | populate `createdBy` |
-| | `POST /` | sí + zod `quotationSchema` (permisivo) | **UPSERT por número (fix 2026-09-18)**: `normalize` → calcula `finalNumber` (usa digitado o auto `nextQuotationNumber`) → si `findOne({number})` existe → `set+recalculate+save` devuelve `200 sobrescrita` (designer solo si es dueño) → si no crea nuevo `201`. Ver §5 |
-| | `PUT /:id` | sí + zod | designer solo borrador/nuevo propios; borra `_id/createdBy/timestamps`, `recalculateAll`, `markModified` |
+| | `POST /` | sí + zod `quotationSchema` (permisivo) | **UPSERT por número (fix 2026-09-18)**: `normalize` → calcula `finalNumber` (usa digitado o auto `nextQuotationNumber`) → si `findOne({number})` existe → `set+recalculate+save` devuelve `200 sobrescrita` (no-admin solo si es dueño) → si no crea nuevo `201`. Ver §5 |
+| | `PUT /:id` | sí + zod | no-admin solo borrador/nuevo propios; borra `_id/createdBy/timestamps`, `recalculateAll`, `markModified` |
 | | `PATCH /:id/status` | admin | enum validStatuses |
 | | `POST /:id/duplicate` | sí | nuevo número, status borrador |
 | | `DELETE /:id` | admin | |
@@ -155,7 +156,7 @@ Síntoma: tras 5 pasos, Guardar no creaba ni desde temporal ni nueva.
 Causa: solo hacía `PUT` con `_id`; desde temporal siempre `POST`; si `number` duplicado (unique) → `400 E11000`.
 Solución:
 - Front `sanitizeQuotation()` + búsqueda previa `GET /quotations?search=<number>` → si existe `PUT existing._id` else `POST`; errores con mensaje servidor (`handleSaveError` log `[saveQuotation:ctx]`).
-- Back `stripTransientKeys()` en `normalizeQuotation()` + `POST` upsert por `findOne({number})` (403 si designer ajeno).
+- Back `stripTransientKeys()` en `normalizeQuotation()` + `POST` upsert por `findOne({number})` (403 si no-admin ajeno).
 - Verificado con `ng build`, `tsc --noEmit`, `eslint`, `jest`, `karma 24/24`.
 
 ## 6. Errores típicos y qué mirar
@@ -163,7 +164,7 @@ Solución:
 - `400 Datos inválidos` → `logs/error-*.log` + Network → `errors[]` de zod (casi nunca es quotation, es login/material).
 - `400 E11000 duplicate key {number}` → ya cubierto por upsert; si aparece, revisar que front/back estén desplegados.
 - `401 Token no proporcionado/inválido` → cookie `secure+sameSite:none` exige HTTPS; en local con API prod funciona por `withCredentials`, pero si expiró (8h) → relogin. Interceptor redirige a `/login`.
-- `403` → rol designer intentando editar ajena o `requireAdmin`.
+- `403` → rol no-admin intentando editar ajena o `requireAdmin`.
 - `500 Error al obtener número` → `Config{key:'global'}` falta y no se pudo crear.
 - Guardar se queda cargando → mirar consola `[saveQuotation:*]`; `isLoading` ahora siempre se resetea.
 - Render dormido → primer `POST` tarda; calentar con `GET /api/ping`. `apiUrl` prod incluso en dev.

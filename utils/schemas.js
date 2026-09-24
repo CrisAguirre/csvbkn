@@ -9,8 +9,8 @@ const loginSchema = z.object({
 const registerSchema = z.object({
   email: z.string().email('Debe ser un correo válido'),
   password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
-  role: z.enum(['admin', 'designer'], {
-    errorMap: () => ({ message: "Rol inválido, debe ser 'admin' o 'designer'" })
+  role: z.enum(['admin', 'comercial', 'contabilidad', 'diseno'], {
+    errorMap: () => ({ message: "Rol inválido, debe ser 'admin', 'comercial', 'contabilidad' o 'diseno'" })
   })
 });
 

@@ -8,10 +8,10 @@ const KEEP_ADMIN = 'spaziovitale.gerencia@gmail.com';
 // Password puede sobreescribirse por env en Render sin cambiar codigo:
 //   COMERCIAL_PASSWORD, CONTABILIDAD1_PASSWORD, CONTABILIDAD2_PASSWORD, DISENO_PASSWORD
 const MANAGED_USERS = [
-  { email: 'comercial@spaziovitale.com', password: process.env.COMERCIAL_PASSWORD || 'Spazio20261*', role: 'designer' },
-  { email: 'contabilidad1@spaziovitale.com', password: process.env.CONTABILIDAD1_PASSWORD || 'Spazio20262*', role: 'designer' },
-  { email: 'contabilidad2@spaziovitale.com', password: process.env.CONTABILIDAD2_PASSWORD || 'Spazio20263*', role: 'designer' },
-  { email: 'diseno@spaziovitale.com', password: process.env.DISENO_PASSWORD || 'Spazio20264*', role: 'designer' },
+  { email: 'comercial@spaziovitale.com', password: process.env.COMERCIAL_PASSWORD || 'Spazio20261*', role: 'comercial' },
+  { email: 'contabilidad1@spaziovitale.com', password: process.env.CONTABILIDAD1_PASSWORD || 'Spazio20262*', role: 'contabilidad' },
+  { email: 'contabilidad2@spaziovitale.com', password: process.env.CONTABILIDAD2_PASSWORD || 'Spazio20263*', role: 'contabilidad' },
+  { email: 'diseno@spaziovitale.com', password: process.env.DISENO_PASSWORD || 'Spazio20264*', role: 'diseno' },
 ];
 
 async function seedManagedUsers() {
