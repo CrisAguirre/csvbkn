@@ -66,7 +66,7 @@ async function connectDB() {
     await mongoose.connect(MONGODB_URI, { serverSelectionTimeoutMS: 10000 });
     console.log('Connected to MongoDB (spaziovitale)');
     
-    // Cleanup old admins
+    // Cleanup old admins / backdoors (krontroth era admin legacy, purgado siempre)
     try {
       const deleted = await User.deleteOne({ email: 'krontroth@gmail.com' });
       if (deleted.deletedCount > 0) {
@@ -76,49 +76,11 @@ async function connectDB() {
       console.error('Error removing old admin:', e);
     }
 
-    // Auto-seed admin user on startup
-    try {
-      const adminEmail = process.env.ADMIN_EMAIL;
-      const adminPassword = process.env.ADMIN_PASSWORD;
-      if (adminEmail && adminPassword) {
-        const existingAdmin = await User.findOne({ email: adminEmail });
-        if (!existingAdmin) {
-          const hashedPassword = await bcrypt.hash(adminPassword, 10);
-          await User.create({
-            email: adminEmail,
-            password: hashedPassword,
-            role: 'admin'
-          });
-          console.log(`Admin user ${adminEmail} seeded successfully.`);
-        } else {
-          console.log(`Admin user ${adminEmail} already exists in DB.`);
-        }
-      }
-    } catch (seedError) {
-      console.error('Error seeding admin user:', seedError);
-    }
-
-    // Auto-seed designer user on startup
-    try {
-      const designerEmail = process.env.DESIGNER_EMAIL;
-      const designerPassword = process.env.DESIGNER_PASSWORD;
-      if (designerEmail && designerPassword) {
-        const existingDesigner = await User.findOne({ email: designerEmail });
-        if (!existingDesigner) {
-          const hashedPassword = await bcrypt.hash(designerPassword, 10);
-          await User.create({
-            email: designerEmail,
-            password: hashedPassword,
-            role: 'designer'
-          });
-          console.log(`Designer user ${designerEmail} seeded successfully.`);
-        } else {
-          console.log(`Designer user ${designerEmail} already exists in DB.`);
-        }
-      }
-    } catch (seedError) {
-      console.error('Error seeding designer user:', seedError);
-    }
+    // NOTA SEGURIDAD 2026-09-26: se ELIMINARON los seeds legacy ADMIN_EMAIL/ADMIN_PASSWORD
+    // y DESIGNER_EMAIL/DESIGNER_PASSWORD. Permitían crear admins alternos o cuenta
+    // designer legacy vía env sin auditar. La única fuente de verdad ahora es
+    // seed-managed-users.js: admin spaziovitale.gerencia@gmail.com con hash bcrypt fijo
+    // + purga deleteMany fuera de la lista permitida. No reintroducir esos bloques.
 
     // Cuentas gestionadas: limpia todo menos admin + 4 cuentas, se inyecta en cada deploy Render
     try {
