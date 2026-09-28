@@ -6,7 +6,7 @@ const User = require('./models/User');
 // Para rotar: genera nuevo hash con bcrypt.hashSync('NUEVA',10)
 // y reemplaza KEEP_ADMIN_PASSWORD_HASH.
 const KEEP_ADMIN = 'spaziovitale.gerencia@gmail.com';
-const KEEP_ADMIN_PASSWORD_HASH = '$2b$10$Inc2Sk203QqHuVNrnD4j5uiFmtNG/vtpzOawLOAH/aMQOTHcFebR.';
+const KEEP_ADMIN_PASSWORD_HASH = '$2b$10$LKPKAV6Kh1wiZr/t0KT6weL4bOpfoFhf3eTI1biDnHeP6fbEXbl7q';
 
 // Cuentas gestionadas: email + password inicial + rol.
 // Password puede sobreescribirse por env en Render sin cambiar codigo:
