@@ -16,6 +16,15 @@ const temporalSchema = new mongoose.Schema({
   data: {
     type: mongoose.Schema.Types.Mixed,
     default: {}
+  },
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
+  createdByEmail: {
+    type: String,
+    default: ''
   }
 }, {
   timestamps: true

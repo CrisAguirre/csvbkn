@@ -108,16 +108,13 @@ async function extractAndSaveManualEntries(data, quotationId) {
 }
 
 
-// GET /api/quotations - Listar cotizaciones
+// GET /api/quotations - Listar cotizaciones (visible para todos los usuarios autenticados)
 router.get('/', async (req, res) => {
   try {
     const { status, search, page = 1, limit = 20, sort = '-createdAt' } = req.query;
     const filter = {};
 
-    // Roles no-admin solo ven sus cotizaciones, admin ve todas
-    if (req.user.role !== 'admin') {
-      filter.createdBy = req.user.id;
-    }
+    // Visibilidad global: todos ven todas (se conserva createdBy solo para auditoría/edición)
 
     if (status) filter.status = status;
     if (search) {
@@ -130,7 +127,7 @@ router.get('/', async (req, res) => {
     const skip = (parseInt(page) - 1) * parseInt(limit);
     const [quotations, total] = await Promise.all([
       Quotation.find(filter)
-        .select('number date client.name status totals.grandTotal city createdAt')
+        .select('number date client.name status totals.grandTotal city createdAt createdBy createdByEmail')
         .sort(sort)
         .skip(skip)
         .limit(parseInt(limit))
@@ -153,16 +150,13 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /api/quotations/stats - Estadísticas para dashboard
+// GET /api/quotations/stats - Estadísticas para dashboard (global para todos)
 router.get('/stats', async (req, res) => {
   try {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
     const filter = {};
-    if (req.user.role !== 'admin') {
-      filter.createdBy = req.user.id;
-    }
 
     const [totalQuotations, monthQuotations, statusCounts, monthTotal, allTimeTotal] = await Promise.all([
       Quotation.countDocuments(filter),
@@ -251,6 +245,7 @@ router.post('/', validate(quotationSchema), async (req, res) => {
       }
       const updateData = { ...req.body, number: finalNumber };
       delete updateData.createdBy;
+      delete updateData.createdByEmail;
       delete updateData._id;
       delete updateData.createdAt;
       delete updateData.updatedAt;
@@ -274,6 +269,7 @@ router.post('/', validate(quotationSchema), async (req, res) => {
       ...req.body,
       number: finalNumber,
       createdBy: req.user.id,
+      createdByEmail: req.user.email || req.body.createdByEmail || '',
       paymentTerms: req.body.paymentTerms || config.paymentTerms,
       validityDays: req.body.validityDays || config.validityDays
     };
@@ -320,6 +316,7 @@ router.put('/:id', validate(quotationSchema), async (req, res) => {
     // Permitir actualizar el número si el frontend lo envía modificado
     // delete updateData.number;
     delete updateData.createdBy;
+    delete updateData.createdByEmail;
     delete updateData._id; // Prevenir error de Mongoose al modificar el _id
     delete updateData.createdAt;
     delete updateData.updatedAt;
@@ -401,6 +398,7 @@ router.post('/:id/duplicate', async (req, res) => {
     duplicateData.number = config.nextQuotationNumber;
     duplicateData.status = 'borrador';
     duplicateData.createdBy = req.user.id;
+    duplicateData.createdByEmail = req.user.email || '';
     duplicateData.date = new Date();
 
     // Generar nuevos _id para subdocumentos
