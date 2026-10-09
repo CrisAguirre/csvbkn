@@ -236,6 +236,7 @@ node seed.js export  # exporta a ../scripts/seed-data.json
 node seed.js import  # DESTRUCTIVO: vacía y recarga Material/LaborTime/Config
 node --check routes/quotations.js
 node --check routes/temporals.js
+node --check routes/projects.js
 ```
 
 ```powershell
@@ -247,7 +248,7 @@ npx tsc -p tsconfig.spec.json --noEmit
 npm run test:e2e
 ```
 
-> Fin agents.md actualizado 2026-09-29. Cambios: visibilidad global quotations/temporals + createdByEmail + duplicate-como-mía + isReadOnly wizard + cleanup solo admin. Pruebas: back 18/18 + lint 0, front tsc 0 + build dev OK + karma 24/24. Auditoría 2026-09-29: (1) CORS `origin:true + credentials:true` refleja cualquier origen — endurecer a whitelist de dominios front en prod; (2) sin rate-limit en `/api/login` — agregar express-rate-limit; (3) UI gates por email/localStorage son cosméticos, enforcement real en backend por id/JWT — OK; (4) `seed-managed-users` resetea passwords en cada arranque — no correr contra prod sin aviso.
+> Fin agents.md actualizado 2026-10-09. Cambios: módulo Proyectos full-stack (backend `models/Project.js + routes/projects.js + utils/projectFlow.js STAGE_DETAILS/STATES + schemas project/updateStage/updateStageState`, frontend `project.service + pages/proyectos + ruta /proyectos + sidebar 📁`, tablero global tiempo real con Estado por paso + auto-refresh 15s + puertas por etapa + presentacion→analisis con feedback + bloqueo admin). Pruebas: back 18/18 + lint 0, front tsc app+spec 0 + build dev OK + karma 24/24. Auditoría previa 2026-09-29: (1) CORS `origin:true + credentials:true` refleja cualquier origen — endurecer a whitelist de dominios front en prod; (2) sin rate-limit en `/api/login` — agregar express-rate-limit; (3) UI gates por email/localStorage son cosméticos, enforcement real en backend por id/JWT — OK; (4) `seed-managed-users` resetea passwords en cada arranque — no correr contra prod sin aviso.
 
 ## 18. Auditoría 2026-09-29 (resumen)
 
