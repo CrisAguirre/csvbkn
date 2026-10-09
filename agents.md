@@ -1,7 +1,8 @@
 # agents.md — Cotizador Spazio Vitale · Backend + Frontend (csvbkn / cotizadorspaziovitale)
 
 > Documento de contexto para agentes IA. Proyecto: **Cotizador Spazio Vitale** (muebles / mesones COMPAC, melamina, tableros, tapacantos, mano de obra).
-> Última verificación: 2026-09-29, leyendo código real + pruebas (backend jest 18/18, eslint 0; frontend tsc --noEmit 0, ng build dev OK, karma 24/24 SUCCESS). Cambio 2026-09-29: visibilidad global + autor (createdByEmail) + duplicar como mía, sin editar ajenas.
+> Última verificación: 2026-10-09, leyendo código real + pruebas (backend jest 18/18, eslint 0; frontend tsc app+spec 0, ng build dev OK, karma 24/24 SUCCESS). Cambio 2026-10-09: nuevo módulo **Proyectos** (monitor secuencial 7 etapas + estado en tiempo real por paso + tablero global).
+> Cambio 2026-09-29: visibilidad global + autor (createdByEmail) + duplicar como mía, sin editar ajenas.
 > Nota de rutas: backend `C:\Users\USUARIO\Desktop\csv\csvbkn\`, frontend `C:\Users\USUARIO\Desktop\csv\cotizadorspaziovitale\` (ambos junto al backend, cada uno con su propio `.git`; raíz `csv/` es git vacío con `?? csvbkn/ ?? cotizadorspaziovitale/`). `csvdemo/` ya no existe como fuente; ignorar referencias viejas a `csvdemo/agents.md`.
 
 ## 1. Dónde está todo
@@ -16,7 +17,7 @@
 
 ## 2. Descripción del proyecto
 
-Backend REST para el cotizador de **Spazio Vitale**. Expone autenticación JWT en cookie httpOnly, CRUD de materiales, configuración global de precios (AIU + IVA), cotizaciones con wizard (5 pasos en frontend), tiempos de mano de obra (MO), temporales (borradores del wizard), manual-entries (log de ítems manuales `_isManual`) y auditoría de logins/logouts (Activity).
+Backend REST para el cotizador de **Spazio Vitale**. Expone autenticación JWT en cookie httpOnly, CRUD de materiales, configuración global de precios (AIU + IVA), cotizaciones con wizard (5 pasos en frontend), tiempos de mano de obra (MO), temporales (borradores del wizard), manual-entries (log de ítems manuales `_isManual`), auditoría de logins/logouts (Activity) y **proyectos** (monitor secuencial de 7 etapas del local comercial con estado en tiempo real por paso).
 Despliegue Render: bind obligatorio a `0.0.0.0` y `PORT` de entorno. TZ forzada a `America/Bogota` en `index.js:2`. Conexión Mongo en background **después** de `app.listen` para no bloquear el puerto.
 
 ## 3. Stack y versiones (verificado en package.json backend)
@@ -32,10 +33,10 @@ Despliegue Render: bind obligatorio a `0.0.0.0` y `PORT` de entorno. TZ forzada 
 
 ```
 index.js                 # app Express, seeds de arranque, auth directo (/login,/register,/activities,/logout,/ping)
-models/                  # User, Config, Material, Quotation, LaborTime, Temporal, ManualEntry, Activity
-routes/                  # materials, config, quotations, labor, temporals, manualEntries
+models/                  # User, Config, Material, Quotation, LaborTime, Temporal, ManualEntry, Activity, Project
+routes/                  # materials, config, quotations, labor, temporals, manualEntries, projects
 middleware/              # auth.js, validate.js
-utils/                   # calculator.js, schemas.js, logger.js
+utils/                   # calculator.js, schemas.js, logger.js, projectFlow.js
 tests/calculator.test.js # 9 tests jest
 logs/                    # application-*.log, error-*.log (winston daily-rotate, creado si falta)
 seed.js                  # export/import (ver §11)
@@ -69,6 +70,7 @@ Sin `JWT_SECRET` o `MONGODB_URI` → `console.error + process.exit(1)`. En Rende
 - **Temporal**: `{clientName default 'Sin Nombre', currentStepName, currentStepNumber, data: Mixed, createdBy ref User default null (null = legacy sin autor), createdByEmail String ''}` + timestamps. Borrador del wizard. Legacy previos a 2026-09-29 tienen `createdBy=null` → UI muestra `Sin registro`.
 - **ManualEntry**: `{quotationId ref Quotation required, category: insumo|canto|accesorio|armado|instalacion required, description required, details: Mixed}` + índices `{category:1, description:'text'}`, `{quotationId:1}`. Log de ítems `_isManual`.
 - **Activity**: `{userEmail required, role required, action: login|logout required, timestamp default now}`.
+- **Project** (monitor secuencial, `models/Project.js`): `{title required, clientName required, clientPhone/Email/Address, contactSource: redes|almacen|recomendacion|recurrente|otro, currentStage: inicio|analisis|presentacion|contratacion|preparacion|produccion|instalacion, stageHistory[{stage,changedBy,changedByEmail,changedAt,notes}], stageStates{inicio..instalacion: {status: pendiente|en_curso|completado|devuelto|bloqueado, updatedAt, updatedByEmail, notes}}, actors{asesorComercial,contadora,operarios,disenador,asesorDiseno}, quotationId ref Quotation?, requirement (et1), quotationRef (et2), feedback (et3), contractNumber+designStatus pendiente|en_proceso|aprobado (et4), insumosRequested+insumosNotes (et5), productionNotes (et6), deliveryDate+finalAmount+finalPaymentReceived+deliveryNotes (et7), priority, notes, active, createdBy, createdByEmail}` + timestamps + índice text `{title,clientName}`. Legacy sin `stageStates` → front deriva de `currentStage`.
 
 ## 7. Endpoints
 
@@ -84,7 +86,7 @@ Auth directo en `index.js` (sin router auth separado):
 | `GET /api/activities` | admin | últimas 100 por `timestamp -1` |
 | `POST /api/logout` | `authMiddleware` | crea `Activity{logout}`, `clearCookie(token, httpOnly secure sameSite:none)` |
 
-Routers (`app.use` en `index.js:267-272`):
+Routers (`app.use` en `index.js:228-235`):
 
 | Base | Método/Ruta | Auth | Notas |
 |---|---|---|---|
@@ -105,6 +107,13 @@ Routers (`app.use` en `index.js:267-272`):
 | `/api/config` | `GET /` (crea default si falta), `PUT /`, `GET /next-number` (inc y devuelve previo) | leer sí, escribir admin | |
 | `/api/labor-times` | `GET /`, `GET /:id`, `POST /`, `PUT /:id`, `DELETE /:id`, `POST /bulk-upsert` | leer sí, escribir admin | |
 | `/api/manual-entries` | `GET /`, `DELETE /:id` | sí | |
+| `/api/projects` | `GET /?search,stage,contactSource,active,page,limit` | sí, **global (todos los actores ven todo en tiempo real)** | populate `createdBy`, sort `updatedAt -1` |
+| | `GET /:id` | sí, global | populate `createdBy + quotationId` |
+| | `POST /` + `projectSchema` | sí | crea con `createdBy/Email=req.user`, `stageStates=initialStageStates(currentStage)` + historial inicial |
+| | `PUT /:id` + `projectSchema` | sí | preserva `createdBy/Email/stageHistory/stageStates`; si cambia `currentStage` valida `isValidTransition + missingExitRequirements` y recalcula `stageStates` |
+| | `PATCH /:id/stage` + `updateProjectStageSchema{stage,notes?,feedback?}` | sí | secuencial +/-1 (admin salta); exige puertas por etapa; `presentacion→analisis` guarda `feedback`; recalcula `stageStates` + historial |
+| | `PATCH /:id/stage-state` + `updateStageStateSchema{stage,status,notes?}` | sí (`bloqueado` solo admin) | marca Estado de un paso sin mover `currentStage`; historial `Estado <stage> → <status>` |
+| | `DELETE /:id` | admin | |
 
 ## 8. Lógica de negocio (utils/calculator.js — verificado)
 
@@ -115,6 +124,14 @@ Exports: `recalculateAll, calculateFurnitureTotals, calculateGlobalTotals` (+ `g
 - `calculateGlobalTotals(totalCost, totalSqm, config, existingTotals, mesonSubtotal, mesonTax, viaticos)`: respeta `%` del payload si vienen (`??` config/defaults 10/35/32/19/descuento), `unforeseen/profit/indirect = totalCost*%`, `subtotal = cost+AIU+mesones`, IVA, descuento, `grandTotal + viáticos`. Rama `products` → `calculateProductsTotals`.
 - `recalculateAll(quotation, config)`: itera `areas[].furniture`, llama `calculateFurnitureTotals`, suma `globalTotalSqm (areaSqm*quantity)`, asigna `quotation.totals = calculateGlobalTotals(...)`. Espejo del front `quotation-calculator.service.ts`.
 - Normalización en `routes/quotations.js`: `stripTransientKeys(obj)` borra recursivamente claves que empiezan con `_` (ej. `_isManual`, `_lamina*`, `_canto*`, `_activity*`), `normalizeQuotation(data)` lo aplica antes de `recalculateAll`. Ítems manuales se registran además en `ManualEntry`.
+
+## 8b. Lógica de Proyectos (utils/projectFlow.js — verificado 2026-10-09 con node -e)
+
+- `STAGES = [inicio, analisis, presentacion, contratacion, preparacion, produccion, instalacion]` + `STAGE_LABELS`, `STAGE_ACTORS` (responsable por etapa), `ROLE_ACTORS` (admin todo; comercial=asesor_comercial; contabilidad=contadora; diseno=disenador+asesor_diseno+operarios).
+- `STAGE_DETAILS`: 1 Inicio (contacto + requerimiento) · 2 Análisis (genera cotización) · 3 Presentación (socializa + feedback → avanza a 4 o vuelve a 2) · 4 Contratación (contrato + planos/diseños) · 5 Preparación (insumos + previas) · 6 Producción (fabricación) · 7 Instalación (entrega + pago final).
+- `STAGE_STATES = [pendiente|en_curso|completado|devuelto|bloqueado]` + `STAGE_STATE_LABELS`. `initialStageStates(currentStage,email)`: actual `en_curso`, previas `completado`, siguientes `pendiente`. `computeStageStatesOnTransition(prev,from,to,email,notes)`: avance `from=completado→to=en_curso`; retroceso `from=devuelto→to=en_curso` + intermedias a `pendiente`.
+- `isValidTransition(from,to,isAdmin)`: `+/-1` salvo admin (cubre `presentacion↔analisis` y `presentacion→contratacion`).
+- `missingExitRequirements(from,project,notes)`: `inicio→requirement`, `analisis→quotationId|quotationRef`, `presentacion→notes|feedback`, `contratacion→contractNumber+designStatus=aprobado`, `preparacion→insumosRequested`, `produccion→productionNotes`, `instalacion→[]`. `routes/projects.js` devuelve `400 + errors[]` si falta; `sanitizeProjectInput` borra `quotationId/deliveryDate` vacíos para evitar cast-error.
 
 ## 9. Auth y roles (middleware/auth.js, index.js:179-264)
 
@@ -131,6 +148,8 @@ Exports: `recalculateAll, calculateFurnitureTotals, calculateGlobalTotals` (+ `g
 - `bulkUpsertSchema`: `{materials: any[].min(1), replaceProvider?}`.
 - `quotationSchema`: **permisivo a propósito** — `{clientName?, documentId?, phone?, address?, status enum 10?, validityDays int+?, paymentTerms?, areas: any[]?, totals: any?}`; casi nunca bloquea, el cálculo lo rehace el servidor.
 - `updateQuotationStatusSchema`: `{status enum 10 estados}`.
+- `projectSchema`: `{title min1, clientName min1, clientPhone/Email/Address?, contactSource?, currentStage?, stageNotes?, actors{5}? , quotationId?, requirement?, quotationRef?, feedback?, contractNumber?, designStatus?, insumosRequested?, insumosNotes?, productionNotes?, deliveryDate?, finalAmount?, finalPaymentReceived?, deliveryNotes?, priority?, notes?, active?}`.
+- `updateProjectStageSchema`: `{stage enum 7, notes?, feedback?}`. `updateStageStateSchema`: `{stage enum 7, status: pendiente|en_curso|completado|devuelto|bloqueado, notes?}`.
 - `validate(schema)`: `schema.parse(req.body)`; si `ZodError` → `400 {success:false, message:'Datos inválidos...', errors:[{field,message}]}` + `logger.error`; otro error → `500`.
 
 ## 11. Scripts seed / import
@@ -147,17 +166,18 @@ Exports: `recalculateAll, calculateFurnitureTotals, calculateGlobalTotals` (+ `g
 - `npm test` → `jest`. `npm run lint` → `eslint .` (config `eslint.config.mjs`: `js.configs.recommended`, ignora `node_modules/**,logs/**`, `no-unused-vars warn` con `argsIgnorePattern ^_`).
 - `utils/logger.js`: winston + daily-rotate (`logs/error-%DATE%.log`, `logs/application-%DATE%.log`, 20m/14d/zip) + consola siempre (Render necesita consola para diagnosticar Timeouts).
 
-## 13. Frontend `cotizadorspaziovitale` — Angular 16 (verificado 2026-09-29: tsc 0, build dev OK, karma 24/24)
+## 13. Frontend `cotizadorspaziovitale` — Angular 16 (verificado 2026-10-09: tsc app+spec 0, build dev OK, karma 24/24)
 
-- Rutas (`app.module.ts`): `/login` pública; resto bajo `MainLayoutComponent+authGuard`: `dashboard, price-list (roleGuard admin), quotations, quotations/new (wizard 5 pasos), quotations/view/:id, quotations/:id, settings/admin, activity/admin`. `** → /login`.
+- Rutas (`app.module.ts`): `/login` pública; resto bajo `MainLayoutComponent+authGuard`: `dashboard, price-list (roleGuard admin), quotations, quotations/new (wizard 5 pasos), quotations/view/:id, quotations/:id, proyectos (todos los roles), settings/admin, activity/admin`. `** → /login`.
 - Guards: `auth.guard` (localStorage `user+expiresAt`), `role.guard` (`expectedRole:'admin'`). Header/activity muestran etiquetas ES.
 - Interceptor `auth.interceptor`: solo `withCredentials:true` si `url.startsWith(environment.apiUrl)`; `401` → logout + `/login`. Ojo: APIs externas (TRM datos.gov.co) sin credentials.
-- Servicios: `auth, config, material (preloadAllMaterials), quotation (CRUD + stats), quotation-calculator (espejo back), quotation-logic (jerarquía muebles), quotation-validation (vs 2604), labor-time, temporal, supplier-import, pdf-generator (pdfmake), theme, toast`.
-- Modelos `models/interfaces.ts`: `Material, LaborTime, AppConfig, SupplyItem(+_lamina*), EdgeBandItem(+_canto*), AccessoryItem, DesignTimeItem, AssemblyItem/InstallationItem(+_activity*), MesonDetails, Furniture(areaSqm, type standard|custom|meson), Area, Quotation(+createdByEmail? desde 2026-09-29), TemporalData(+createdBy?,createdByEmail?), WizardConfig{clientPriceMode: unit_sqm|manual|outsource|products|'', hardwareDisplayMode, moTimeMode, requiresDesignFiles:null|bool, areaDisplayMode, mesonMode, pricingTier, wizardCompleted}`.
-- Componentes: `sidebar (temporales globales + autor 👤 + resume/delete con 403)`, `header`, `material-picker`, `toast`, `main-layout`. Páginas: `login, dashboard (stats globales + TRM), price-list (CRUD), settings, quotation-list (activas/archivadas, filtro, sort por N°/fecha/cliente/ciudad/total/estado/creador, columna Creada por, duplicar 📋, PDF, editar solo propia, eliminar solo admin), quotation-view (muestra Creada por), quotation-wizard (isReadOnly + banner Solo lectura, save bloqueado en ajenas), activity`.
+- Servicios: `auth, config, material (preloadAllMaterials), quotation (CRUD + stats), quotation-calculator (espejo back), quotation-logic (jerarquía muebles), quotation-validation (vs 2604), labor-time, temporal, supplier-import, pdf-generator (pdfmake), theme, toast, project (CRUD + advanceStage + updateStageState)`.
+- Modelos `models/interfaces.ts`: `Material, LaborTime, AppConfig, SupplyItem(+_lamina*), EdgeBandItem(+_canto*), AccessoryItem, DesignTimeItem, AssemblyItem/InstallationItem(+_activity*), MesonDetails, Furniture(areaSqm, type standard|custom|meson), Area, Quotation(+createdByEmail? desde 2026-09-29), TemporalData(+createdBy?,createdByEmail?), WizardConfig{...}, Project{title,clientName,contactSource,currentStage,stageHistory,stageStates?: Record<ProjectStage,{status,updatedAt,updatedByEmail,notes}>, actors, quotationId?, requirement?, quotationRef?, feedback?, contractNumber?, designStatus?, insumosRequested?, insumosNotes?, productionNotes?, deliveryDate?, finalAmount?, finalPaymentReceived?, deliveryNotes?}, ProjectStage, ContactSource, StageStateStatus`.
+- Componentes: `sidebar (+📁 Proyectos global + temporales globales + autor 👤 + resume/delete con 403)`, `header`, `material-picker`, `toast`, `main-layout`. Páginas: `login, dashboard (stats globales + TRM), price-list (CRUD), settings, quotation-list (activas/archivadas, filtro, sort por N°/fecha/cliente/ciudad/total/estado/creador, columna Creada por, duplicar 📋, PDF, editar solo propia, eliminar solo admin), quotation-view (muestra Creada por), quotation-wizard (isReadOnly + banner Solo lectura, save bloqueado en ajenas), activity, proyectos (tablero global en tiempo real)`.
 - Wizard (`TOTAL_STEPS=5`, `maxSteps=4` en products): 1 Cliente (`quotationForm` name/city/phone/email), 2 Config (5 preguntas: precio, diseño, áreas, mesones, lista precios; en manual se omite 5, en products solo 1), 3 Muebles (áreas + furniture + meson toggle + 7 secciones: supplies, edgeBands, designTime, accessories, assembly, installation + subAreas/visibles), 4 Presupuesto (valida `isStepValid(4)`: mesón precio>0, sin `Est.` ni `unitPrice<=0`), 5 Resumen AIU (edita % imprev/util/indirect/IVA/recargo, `grandTotal`). `autoSave()` en cada `next/prev`: si `activeQuotation._id` existe NO guarda temporal; si no `POST /temporals` (con manejo 403 → suelta `_id` y crea copia propia). `loadTemporal` ajeno → `temporalId=undefined` + toast copia. `loadQuotation` ajena no-admin → `isReadOnly=true` + toast + Guardar deshabilitado. Botonera: Siguiente deshabilitado si `!isStepValid`, Guardar solo en `maxSteps` y si `!isReadOnly`.
 - `src/assets/data/`: `implementation_plan.md`, `excel-formulas.md`, `proveedores-precios.md`, Excels/DOCs, `src/assets/Precios proveedores/`.
 - Tests front: `*.spec.ts` + `quotation-wizard-save.spec.ts` (5 tests sanitize/overwrite + mock AuthService admin). Total 24 karma SUCCESS. `npx tsc -p tsconfig.spec.json --noEmit` debe ser exit 0. `npm run test:e2e` → playwright `e2e/mesones.spec.ts`.
+- Proyectos (`pages/proyectos/proyectos.component.ts|html|css`, `services/project.service.ts`): tablero global (todos ven todo, sin filtro por dueño) con filtros `search/stage/contactSource/state`, tabla `Trabajo/Cliente/Etapa/Estado del paso/Progreso%`, stepper 7 pasos clicable con badge de Estado (`st-pendiente|en_curso|completado|devuelto|bloqueado`) + ⛔ bloquear (admin) por paso, panel detalle por etapa (descripción + checklist + forms: `requirement|quotationId+Ref|feedback|contractNumber+designStatus|insumosRequested+Notes|productionNotes|deliveryDate+finalAmount+finalPayment+deliveryNotes`), `missingFor()` espejo back, `advanceSelected/nextStage/prevStage/sendBackToAnalisis/saveStageData`, auto-refresh 15s (`setInterval`, `lastRefresh`, `autoRefresh`, `refreshNow()`), progreso `% completado/7`, historial. `OnDestroy` limpia timer.
 
 ## 14. Flujo temporal → cotización + fix 2026-09-18 + visibilidad global 2026-09-29
 
@@ -168,18 +188,28 @@ Exports: `recalculateAll, calculateFurnitureTotals, calculateGlobalTotals` (+ `g
 5. Lista `quotations` global con columna `Creada por` (`createdByEmail||createdBy.email||Sin registro`); editar/ciclo de vida solo propias (`canEdit()` por email, admin todo); **duplicar 📋** cualquiera → copia a tu nombre.
 - Fix 2026-09-18 síntoma: tras 5 pasos, Guardar no creaba ni desde temporal ni nueva. Causa: solo hacía `PUT` con `_id`; desde temporal siempre `POST`; si `number` duplicado (unique) → `400 E11000`. Solución: front `sanitizeQuotation()` + `GET /quotations?search=<number>` → `PUT existing._id` else `POST` (`handleSaveError` log `[saveQuotation:ctx]`); back `stripTransientKeys()` + `POST` upsert por `findOne({number})` (403 si no-admin ajeno). Verificado con `ng build`, `tsc --noEmit`, `eslint`, `jest`, `karma 24/24`.
 
+## 14b. Flujo proyectos (monitor secuencial 7 etapas + estado por paso, 2026-10-09)
+
+1. Crear en `📁 Proyectos → Nuevo proyecto` (título + cliente + fuente `redes|almacen|recomendacion|recurrente` + prioridad + actores) → `POST /api/projects` → `stageStates.inicio=en_curso`.
+2. Etapa actual muestra descripción + checklist + form de su puerta de salida → `💾 Guardar datos etapa` (`PUT /:id`) → `Siguiente` (`PATCH /:id/stage`) valida puertas; si falta → `400/ warn` con campo (`requirement|quotation|feedback|contractNumber+design|insumos|productionNotes`).
+3. Presentación: `✓ Aprobar → Contratación` o `↩ Devolver a Análisis` (ambas exigen feedback; la devolución marca `presentacion=devuelto, analisis=en_curso`).
+4. Cualquier paso puede marcarse `bloqueado` (⛔, solo admin) vía `PATCH /:id/stage-state`; historial registra `Estado <stage> → <status>`.
+5. Tablero global auto-refresca 15s: todos los actores ven `Etapa + Estado del paso + Progreso% + updatedByEmail + updatedAt`; filtro por Estado; `selected` se re-sincroniza por `_id` sin perder detalle.
+
 ## 15. Errores típicos
 
 - `400 Datos inválidos` → `logs/error-*.log` + Network → `errors[]` zod (casi nunca es quotation, es login/material).
 - `400 E11000 duplicate key {number}` → ya cubierto por upsert; si aparece, revisar que front/back estén desplegados.
 - `401 Token no proporcionado/inválido` → cookie `secure+sameSite:none` exige HTTPS; en local con API prod funciona por `withCredentials`, pero si expiró (8h) → relogin. Interceptor redirige a `/login`.
-- `403` → (a) no-admin editando cotización ajena (`PUT /:id`, upsert `POST /`), (b) editando/borrando temporal ajeno (`POST /temporals`, `DELETE /temporals/:id`), (c) `requireAdmin` (`PATCH status`, `DELETE quotation`, `DELETE temporals/all/cleanup`). UI muestra toast + `Solo lectura`.
+- `403` → (a) no-admin editando cotización ajena (`PUT /:id`, upsert `POST /`), (b) editando/borrando temporal ajeno (`POST /temporals`, `DELETE /temporals/:id`), (c) `requireAdmin` (`PATCH status`, `DELETE quotation`, `DELETE temporals/all/cleanup`, `DELETE project`, `PATCH project stage-state→bloqueado`).
+- Proyectos `400 Faltan requisitos...` → completar puerta de la etapa actual (ver §8b/14b); `403 no secuencial` → avanzar/retroceder de a 1 (admin puede saltar).
 - `500 Error al obtener número` → `Config{key:'global'}` falta y no se pudo crear.
 - Guardar se queda cargando → consola `[saveQuotation:*]`; `isLoading` debe resetearse. Si `isReadOnly`, Guardar deshabilitado a propósito.
 - Render dormido → primer `POST` tarda; calentar con `GET /api/ping`.
 - `node_modules` ausente tras clone → `npm install` primero (front 1060 paquetes, ~34s).
 - Karma `Found 1 load error` + `TS2741/TS2739` → faltan `address/viaticos/installationAddress/sameAddress` en fixtures; ya corregidos. Spec wizard requiere mock `AuthService` (admin) por nuevo constructor con `isReadOnly`.
 - `node --check routes/quotations.js` y `routes/temporals.js` para chequeo rápido backend.
+- Proyectos: `node --check models/Project.js && node --check routes/projects.js && node --check utils/projectFlow.js && node --check utils/schemas.js`; lógica pura verificable con `node -e "require('./utils/projectFlow')"` (`initialStageStates/computeStageStatesOnTransition/missingExitRequirements`).
 
 ## 16. Reglas y advertencias para agentes
 
