@@ -62,11 +62,67 @@ const updateQuotationStatusSchema = z.object({
   })
 });
 
+// --- Project Schemas (monitor secuencial 7 etapas) ---
+const projectSchema = z.object({
+  title: z.string().trim().min(1, 'El título es requerido'),
+  clientName: z.string().trim().min(1, 'El cliente es requerido'),
+  clientPhone: z.string().optional().nullable(),
+  clientEmail: z.string().optional().nullable(),
+  clientAddress: z.string().optional().nullable(),
+  contactSource: z.enum(['redes', 'almacen', 'recomendacion', 'recurrente', 'otro']).optional(),
+  currentStage: z.enum(['inicio', 'analisis', 'presentacion', 'contratacion', 'preparacion', 'produccion', 'instalacion']).optional(),
+  stageNotes: z.string().optional().nullable(),
+  actors: z.object({
+    asesorComercial: z.string().optional().nullable(),
+    contadora: z.string().optional().nullable(),
+    operarios: z.string().optional().nullable(),
+    disenador: z.string().optional().nullable(),
+    asesorDiseno: z.string().optional().nullable()
+  }).partial().optional().nullable(),
+  quotationId: z.string().optional().nullable(),
+  requirement: z.string().optional().nullable(),
+  quotationRef: z.string().optional().nullable(),
+  feedback: z.string().optional().nullable(),
+  contractNumber: z.string().optional().nullable(),
+  designStatus: z.enum(['pendiente', 'en_proceso', 'aprobado']).optional(),
+  insumosRequested: z.boolean().optional().nullable(),
+  insumosNotes: z.string().optional().nullable(),
+  productionNotes: z.string().optional().nullable(),
+  deliveryDate: z.string().optional().nullable(),
+  finalAmount: z.number().nonnegative().optional().nullable(),
+  finalPaymentReceived: z.boolean().optional().nullable(),
+  deliveryNotes: z.string().optional().nullable(),
+  priority: z.enum(['baja', 'media', 'alta', 'urgente']).optional(),
+  notes: z.string().optional().nullable(),
+  active: z.boolean().optional().nullable()
+});
+
+const updateProjectStageSchema = z.object({
+  stage: z.enum(['inicio', 'analisis', 'presentacion', 'contratacion', 'preparacion', 'produccion', 'instalacion'], {
+    errorMap: () => ({ message: "Etapa inválida" })
+  }),
+  notes: z.string().optional().nullable(),
+  feedback: z.string().optional().nullable()
+});
+
+const updateStageStateSchema = z.object({
+  stage: z.enum(['inicio', 'analisis', 'presentacion', 'contratacion', 'preparacion', 'produccion', 'instalacion'], {
+    errorMap: () => ({ message: "Etapa inválida" })
+  }),
+  status: z.enum(['pendiente', 'en_curso', 'completado', 'devuelto', 'bloqueado'], {
+    errorMap: () => ({ message: "Estado inválido" })
+  }),
+  notes: z.string().optional().nullable()
+});
+
 module.exports = {
   loginSchema,
   registerSchema,
   materialSchema,
   bulkUpsertSchema,
   quotationSchema,
-  updateQuotationStatusSchema
+  updateQuotationStatusSchema,
+  projectSchema,
+  updateProjectStageSchema,
+  updateStageStateSchema
 };
