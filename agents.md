@@ -114,6 +114,7 @@ Routers (`app.use` en `index.js:228-235`):
 | | `PUT /:id` + `projectSchema` | sí | preserva `createdBy/Email/stageHistory/stageStates`; si cambia `currentStage` valida `isValidTransition + missingExitRequirements` y recalcula `stageStates` |
 | | `PATCH /:id/stage` + `updateProjectStageSchema{stage,notes?,feedback?}` | sí | secuencial +/-1 (admin salta); exige puertas por etapa; `presentacion→analisis` guarda `feedback`; recalcula `stageStates` + historial |
 | | `PATCH /:id/stage-state` + `updateStageStateSchema{stage,status,notes?}` | sí (`bloqueado` solo admin) | marca Estado de un paso sin mover `currentStage`; historial `Estado <stage> → <status>` |
+| | `PATCH /:id/step` + `updateProjectStepSchema{stage,substep?,status?,responsible?,notes?,kind?,reason?}` | sí, **permiso por rol (403 si no responsable/admin)** | actualiza detalle de un subpaso (tiempo real); bloquea campos sensibles para no-admin; soporta `kind` (normal/solicitud_ajuste/ajuste_aplicado) y `reason` |
 | | `DELETE /:id` | admin | |
 
 ## 8. Lógica de negocio (utils/calculator.js — verificado)

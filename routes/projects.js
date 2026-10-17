@@ -4,7 +4,7 @@ const Project = require('../models/Project');
 const { authMiddleware, requireAdmin } = require('../middleware/auth');
 const validate = require('../middleware/validate');
 const { projectSchema, updateProjectStageSchema, updateStageStateSchema, updateProjectStepSchema } = require('../utils/schemas');
-const { isValidTransition, missingExitRequirements, initialStageStates, computeStageStatesOnTransition } = require('../utils/projectFlow');
+const { isValidTransition, missingExitRequirements, initialStageStates, computeStageStatesOnTransition, canRoleMoveStage } = require('../utils/projectFlow');
 
 function sanitizeProjectInput(body) {
   const data = { ...body };
@@ -82,6 +82,17 @@ router.put('/:id', validate(projectSchema), async (req, res) => {
     if (!project) return res.status(404).json({ success: false, message: 'Proyecto no encontrado.' });
     const isAdmin = req.user.role === 'admin';
     const clean = sanitizeProjectInput(req.body);
+    // Campos sensibles bloqueados para no-admin una vez diligenciados
+    if (!isAdmin) {
+      const locked = ['contractNumber', 'designStatus', 'documentsSignedClient', 'documentsSignedAdmin', 'payment60Received', 'finalPaymentReceived', 'deliveryDate'];
+      for (const f of locked) {
+        const cur = project[f];
+        const isSet = (typeof cur === 'boolean') ? cur === true : !!cur;
+        if (isSet && Object.prototype.hasOwnProperty.call(clean, f)) {
+          delete clean[f];
+        }
+      }
+    }
     // Cambio de etapa via PUT también valida secuencia + puertas de salida
     if (clean.currentStage && clean.currentStage !== project.currentStage) {
       if (!isValidTransition(project.currentStage, clean.currentStage, isAdmin)) {
@@ -200,6 +211,10 @@ router.patch('/:id/step', validate(updateProjectStepSchema), async (req, res) =>
     const project = await Project.findById(req.params.id);
     if (!project) return res.status(404).json({ success: false, message: 'Proyecto no encontrado.' });
     const { stage, substep, status, responsible, notes, kind, reason } = req.body;
+    // Permiso por rol para editar pasos de la etapa
+    if (!canRoleMoveStage(req.user.role, stage) && req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'No tienes permiso para editar esta etapa.' });
+    }
     if (!stage) return res.status(400).json({ success: false, message: 'Etapa requerida.' });
 
     // Actualizar stageDetails[stage][substep]
