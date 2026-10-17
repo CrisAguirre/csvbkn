@@ -3,7 +3,7 @@ const router = express.Router();
 const Project = require('../models/Project');
 const { authMiddleware, requireAdmin } = require('../middleware/auth');
 const validate = require('../middleware/validate');
-const { projectSchema, updateProjectStageSchema, updateStageStateSchema } = require('../utils/schemas');
+const { projectSchema, updateProjectStageSchema, updateStageStateSchema, updateProjectStepSchema } = require('../utils/schemas');
 const { isValidTransition, missingExitRequirements, initialStageStates, computeStageStatesOnTransition } = require('../utils/projectFlow');
 
 function sanitizeProjectInput(body) {
@@ -189,6 +189,54 @@ router.patch('/:id/stage-state', validate(updateStageStateSchema), async (req, r
     });
     await project.save();
     res.json({ success: true, data: project, message: `Paso ${stage} marcado como ${status}.` });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+});
+
+// PATCH /api/projects/:id/step - Actualizar detalle de un subpaso (informacion tecnica en tiempo real)
+router.patch('/:id/step', validate(updateProjectStepSchema), async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.id);
+    if (!project) return res.status(404).json({ success: false, message: 'Proyecto no encontrado.' });
+    const { stage, substep, status, responsible, notes } = req.body;
+    if (!stage) return res.status(400).json({ success: false, message: 'Etapa requerida.' });
+
+    // Actualizar stageDetails[stage][substep]
+    const details = project.stageDetails && typeof project.stageDetails === 'object' ? { ...project.stageDetails } : {};
+    if (!details[stage]) details[stage] = {};
+    const key = substep || '_general';
+    const prev = details[stage][key] || {};
+    details[stage][key] = {
+      ...prev,
+      substep: substep || '',
+      status: status || prev.status || 'pendiente',
+      responsible: responsible !== undefined && responsible !== null ? responsible : (prev.responsible || ''),
+      notes: notes !== undefined && notes !== null ? notes : (prev.notes || ''),
+      byEmail: req.user.email || '',
+      byRole: req.user.role || '',
+      updatedAt: new Date()
+    };
+    project.stageDetails = details;
+    project.markModified('stageDetails');
+
+    // Append to stepUpdates timeline (mantener ultimos 200)
+    const updates = Array.isArray(project.stepUpdates) ? [...project.stepUpdates] : [];
+    updates.push({
+      stage,
+      substep: substep || '',
+      status: status || 'pendiente',
+      responsible: responsible || '',
+      notes: notes || '',
+      byEmail: req.user.email || '',
+      byRole: req.user.role || '',
+      at: new Date()
+    });
+    if (updates.length > 200) updates.splice(0, updates.length - 200);
+    project.stepUpdates = updates;
+
+    await project.save();
+    res.json({ success: true, data: project, message: 'Paso actualizado.' });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
   }

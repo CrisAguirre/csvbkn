@@ -60,6 +60,41 @@ const projectSchema = new mongoose.Schema({
   insumosRequested: { type: Boolean, default: false }, // 5 Preparacion: insumos solicitados
   insumosNotes: { type: String, default: '' }, // 5 preparaciones varias
   productionNotes: { type: String, default: '' }, // 6 Produccion: fabricacion
+  // Detalle por submodulo (informacion tecnica en tiempo real por paso)
+  stageDetails: { type: mongoose.Schema.Types.Mixed, default: {} },
+  stepUpdates: [{
+    stage: { type: String, enum: STAGES, required: true },
+    substep: { type: String, default: '' },
+    status: { type: String, enum: ['pendiente', 'en_curso', 'completado', 'bloqueado'], default: 'pendiente' },
+    responsible: { type: String, default: '' },
+    notes: { type: String, default: '' },
+    byEmail: { type: String, default: '' },
+    byRole: { type: String, default: '' },
+    at: { type: Date, default: Date.now }
+  }],
+  // Campos detallados por etapa (estructura secuencia Spazio Vitale)
+  // Etapa 1 Inicio
+  needType: { type: String, default: '' }, // compra|fabricacion|etc
+  designBudget: { type: Number, default: 0 }, // presupuesto de diseno
+  designPaymentReceived: { type: Boolean, default: false }, // pago de diseno
+  receptionNotes: { type: String, default: '' },
+  // Etapa 2 Desarrollo
+  designElaborationNotes: { type: String, default: '' },
+  designPresentationNotes: { type: String, default: '' },
+  materialsConfirmed: { type: Boolean, default: false },
+  // Etapa 3 Presentacion
+  quotationSocializationNotes: { type: String, default: '' },
+  appliancesSocializationNotes: { type: String, default: '' },
+  // Etapa 4 Contratacion
+  contractElaborated: { type: Boolean, default: false },
+  plansElaborated: { type: Boolean, default: false },
+  documentsSignedClient: { type: Boolean, default: false },
+  documentsSignedAdmin: { type: Boolean, default: false },
+  payment60Received: { type: Boolean, default: false },
+  // Etapa 5 Preparacion
+  designerDocumentSent: { type: Boolean, default: false },
+  materialsOrderReady: { type: Boolean, default: false },
+  materialsChecklistDone: { type: Boolean, default: false },
   deliveryDate: { type: Date, default: null }, // 7 Instalacion/entrega
   finalAmount: { type: Number, default: 0 }, // 7 pago final esperado
   finalPaymentReceived: { type: Boolean, default: false }, // 7 pago final recibido

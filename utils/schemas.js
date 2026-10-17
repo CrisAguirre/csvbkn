@@ -88,6 +88,25 @@ const projectSchema = z.object({
   insumosRequested: z.boolean().optional().nullable(),
   insumosNotes: z.string().optional().nullable(),
   productionNotes: z.string().optional().nullable(),
+  stageDetails: z.any().optional().nullable(),
+  stepUpdates: z.array(z.any()).optional().nullable(),
+  needType: z.string().optional().nullable(),
+  designBudget: z.number().nonnegative().optional().nullable(),
+  designPaymentReceived: z.boolean().optional().nullable(),
+  receptionNotes: z.string().optional().nullable(),
+  designElaborationNotes: z.string().optional().nullable(),
+  designPresentationNotes: z.string().optional().nullable(),
+  materialsConfirmed: z.boolean().optional().nullable(),
+  quotationSocializationNotes: z.string().optional().nullable(),
+  appliancesSocializationNotes: z.string().optional().nullable(),
+  contractElaborated: z.boolean().optional().nullable(),
+  plansElaborated: z.boolean().optional().nullable(),
+  documentsSignedClient: z.boolean().optional().nullable(),
+  documentsSignedAdmin: z.boolean().optional().nullable(),
+  payment60Received: z.boolean().optional().nullable(),
+  designerDocumentSent: z.boolean().optional().nullable(),
+  materialsOrderReady: z.boolean().optional().nullable(),
+  materialsChecklistDone: z.boolean().optional().nullable(),
   deliveryDate: z.string().optional().nullable(),
   finalAmount: z.number().nonnegative().optional().nullable(),
   finalPaymentReceived: z.boolean().optional().nullable(),
@@ -107,11 +126,21 @@ const updateProjectStageSchema = z.object({
 
 const updateStageStateSchema = z.object({
   stage: z.enum(['inicio', 'analisis', 'presentacion', 'contratacion', 'preparacion', 'produccion', 'instalacion'], {
-    errorMap: () => ({ message: "Etapa inválida" })
+    errorMap: () => ({ message: "Estado inv�lido" })
   }),
   status: z.enum(['pendiente', 'en_curso', 'completado', 'devuelto', 'bloqueado'], {
-    errorMap: () => ({ message: "Estado inválido" })
+    errorMap: () => ({ message: "Estado inv�lido" })
   }),
+  notes: z.string().optional().nullable()
+});
+
+const updateProjectStepSchema = z.object({
+  stage: z.enum(['inicio', 'analisis', 'presentacion', 'contratacion', 'preparacion', 'produccion', 'instalacion'], {
+    errorMap: () => ({ message: "Etapa inv�lida" })
+  }),
+  substep: z.string().optional().nullable(),
+  status: z.enum(['pendiente', 'en_curso', 'completado', 'bloqueado']).optional(),
+  responsible: z.string().optional().nullable(),
   notes: z.string().optional().nullable()
 });
 
@@ -124,5 +153,6 @@ module.exports = {
   updateQuotationStatusSchema,
   projectSchema,
   updateProjectStageSchema,
-  updateStageStateSchema
+  updateStageStateSchema,
+  updateProjectStepSchema
 };
