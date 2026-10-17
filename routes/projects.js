@@ -199,7 +199,7 @@ router.patch('/:id/step', validate(updateProjectStepSchema), async (req, res) =>
   try {
     const project = await Project.findById(req.params.id);
     if (!project) return res.status(404).json({ success: false, message: 'Proyecto no encontrado.' });
-    const { stage, substep, status, responsible, notes } = req.body;
+    const { stage, substep, status, responsible, notes, kind, reason } = req.body;
     if (!stage) return res.status(400).json({ success: false, message: 'Etapa requerida.' });
 
     // Actualizar stageDetails[stage][substep]
@@ -213,6 +213,8 @@ router.patch('/:id/step', validate(updateProjectStepSchema), async (req, res) =>
       status: status || prev.status || 'pendiente',
       responsible: responsible !== undefined && responsible !== null ? responsible : (prev.responsible || ''),
       notes: notes !== undefined && notes !== null ? notes : (prev.notes || ''),
+      kind: kind || prev.kind || 'normal',
+      reason: reason !== undefined && reason !== null ? reason : (prev.reason || ''),
       byEmail: req.user.email || '',
       byRole: req.user.role || '',
       updatedAt: new Date()
@@ -228,6 +230,8 @@ router.patch('/:id/step', validate(updateProjectStepSchema), async (req, res) =>
       status: status || 'pendiente',
       responsible: responsible || '',
       notes: notes || '',
+      kind: kind || 'normal',
+      reason: reason || '',
       byEmail: req.user.email || '',
       byRole: req.user.role || '',
       at: new Date()

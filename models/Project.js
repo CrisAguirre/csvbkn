@@ -70,6 +70,8 @@ const projectSchema = new mongoose.Schema({
     notes: { type: String, default: '' },
     byEmail: { type: String, default: '' },
     byRole: { type: String, default: '' },
+    kind: { type: String, enum: ['normal', 'solicitud_ajuste', 'ajuste_aplicado'], default: 'normal' },
+    reason: { type: String, default: '' },
     at: { type: Date, default: Date.now }
   }],
   // Campos detallados por etapa (estructura secuencia Spazio Vitale)

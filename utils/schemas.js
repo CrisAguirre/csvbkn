@@ -141,7 +141,9 @@ const updateProjectStepSchema = z.object({
   substep: z.string().optional().nullable(),
   status: z.enum(['pendiente', 'en_curso', 'completado', 'bloqueado']).optional(),
   responsible: z.string().optional().nullable(),
-  notes: z.string().optional().nullable()
+  notes: z.string().optional().nullable(),
+  kind: z.enum(['normal', 'solicitud_ajuste', 'ajuste_aplicado']).optional(),
+  reason: z.string().optional().nullable()
 });
 
 module.exports = {
