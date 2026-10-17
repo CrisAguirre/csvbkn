@@ -25,6 +25,7 @@ const laborRoutes = require('./routes/labor');
 const temporalsRoutes = require('./routes/temporals');
 const manualEntriesRoutes = require('./routes/manualEntries');
 const projectsRoutes = require('./routes/projects');
+const usersRoutes = require('./routes/users');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -234,6 +235,7 @@ app.use('/api/labor-times', laborRoutes);
 app.use('/api/temporals', temporalsRoutes);
 app.use('/api/manual-entries', manualEntriesRoutes);
 app.use('/api/projects', projectsRoutes);
+app.use('/api/users', usersRoutes);
 
 // Actividad Endpoint
 app.get('/api/activities', authMiddleware, requireAdmin, async (req, res) => {
