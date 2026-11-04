@@ -97,10 +97,58 @@ const projectSchema = new mongoose.Schema({
   designerDocumentSent: { type: Boolean, default: false },
   materialsOrderReady: { type: Boolean, default: false },
   materialsChecklistDone: { type: Boolean, default: false },
-  deliveryDate: { type: Date, default: null }, // 7 Instalacion/entrega
-  finalAmount: { type: Number, default: 0 }, // 7 pago final esperado
-  finalPaymentReceived: { type: Boolean, default: false }, // 7 pago final recibido
-  deliveryNotes: { type: String, default: '' }, // 7 acta/entrega
+
+  // Etapa 6 Fabricación / Producción (según fabricacion y entrega.md de fábrica)
+  // 6.1 Ingresa contrato
+  contractPlansSigned: { type: Boolean, default: false },
+  contractSigned: { type: Boolean, default: false },
+  appliancesConfirmed: { type: Boolean, default: false },
+  appliancesNotes: { type: String, default: '' },
+  // 6.2 Pedidos y seguimiento de materiales
+  orderMelamines: { type: Boolean, default: false },
+  orderEdges: { type: Boolean, default: false },
+  orderFittings: { type: Boolean, default: false },
+  orderCountertop: { type: Boolean, default: false },
+  orderEstimatedArrival: { type: String, default: '' },
+  orderFollowupNotes: { type: String, default: '' },
+  // 6.3 Identificar fechas de instalación y programación de obra
+  targetDeliveryDate: { type: Date, default: null },
+  measurementsRectificationDate: { type: Date, default: null },
+  mepPlansReady: { type: Boolean, default: false },
+  cuttingListScheduled: { type: Boolean, default: false },
+  productionTasksScheduled: { type: Boolean, default: false },
+  // 6.4 Rectificación final de medidas
+  estimatedCompletionDate: { type: Date, default: null },
+  mepPlansVerifiedOnSite: { type: Boolean, default: false },
+  rectificationNotes: { type: String, default: '' },
+  // 6.5 Elaboración final de despiece
+  cutAndEdgePlansDone: { type: Boolean, default: false },
+  assemblyPlansDone: { type: Boolean, default: false },
+  // 6.6 Inicio y finalización de producción
+  materialsAvailabilityVerified: { type: Boolean, default: false },
+  cuttingDone: { type: Boolean, default: false },
+  edgingDone: { type: Boolean, default: false },
+  assemblyDone: { type: Boolean, default: false },
+  fittingsInstalled: { type: Boolean, default: false },
+  workshopCompletionDone: { type: Boolean, default: false },
+
+  // Etapa 7 Entrega e Instalación (según fabricacion y entrega.md de fábrica)
+  // 7.1 Verificación de la obra
+  civilWorkFinished: { type: Boolean, default: false },
+  civilWorkNotes: { type: String, default: '' },
+  // 7.2 Control de calidad despacho e instalación
+  qualityControlFormSigned: { type: Boolean, default: false },
+  qualityControlNotes: { type: String, default: '' },
+  // 7.3 Formalización de la entrega
+  deliveryFormSigned: { type: Boolean, default: false },
+  deliveryDate: { type: Date, default: null }, // Fecha de entrega final
+  finalAmount: { type: Number, default: 0 }, // Pago final esperado
+  finalPaymentReceived: { type: Boolean, default: false }, // Pago final recibido
+  deliveryNotes: { type: String, default: '' }, // Acta / notas de entrega
+  // 7.4 Seguimiento al cliente
+  maintenanceManualDelivered: { type: Boolean, default: false },
+  customerFollowupNotes: { type: String, default: '' },
+
   priority: { type: String, enum: ['baja', 'media', 'alta', 'urgente'], default: 'media' },
   notes: { type: String, default: '' },
   active: { type: Boolean, default: true },

@@ -9,8 +9,8 @@ const STAGE_LABELS = {
   presentacion: '3. Presentación',
   contratacion: '4. Contratación',
   preparacion: '5. Preparación',
-  produccion: '6. Producción',
-  instalacion: '7. Instalación'
+  produccion: '6. Fabricación',
+  instalacion: '7. Entrega e Instalación'
 };
 
 // Actor responsable principal por etapa (etiquetas ES del negocio).
@@ -20,8 +20,8 @@ const STAGE_ACTORS = {
   presentacion: ['asesor_comercial', 'cliente'],
   contratacion: ['contadora', 'asesor_comercial'],
   preparacion: ['disenador', 'operarios'],
-  produccion: ['operarios'],
-  instalacion: ['operarios']
+  produccion: ['operarios', 'asesor_comercial', 'contadora'],
+  instalacion: ['operarios', 'asesor_comercial']
 };
 
 // Mapeo rol de sistema -> actores que puede mover.
@@ -68,15 +68,27 @@ const STAGE_DETAILS = {
     exitRequires: ['insumos']
   },
   produccion: {
-    title: '6. Producción',
-    description: 'Se procede a la fabricacion.',
-    checklist: ['Fabricar', 'Control de calidad', 'Registrar notas de produccion'],
+    title: '6. Fabricación',
+    description: 'Proceso de fabricación en fábrica: ingreso de contrato, pedidos y seguimiento, programación de fechas, rectificación final de medidas, elaboración final de despiece y ejecución de corte, enchape, armado y herrajes.',
+    checklist: [
+      'Ingreso de contrato a fábrica (planos, contratos, fichas técnicas o compra electrodomésticos)',
+      'Pedidos de materiales y seguimiento (melaminas, cantos, herrajes, mesón)',
+      'Identificar fechas de instalación y programación de obra',
+      'Rectificación final de medidas y verificación de puntos eléctricos e hidráulicos',
+      'Elaboración final de despiece (corte, enchape y armado)',
+      'Inicio de producción (disponibilidad, corte, enchape, armado, herrajes y finalización en taller)'
+    ],
     exitRequires: ['productionNotes']
   },
   instalacion: {
-    title: '7. Instalación',
-    description: 'Paso final: se entrega la obra y se recibe el pago final.',
-    checklist: ['Instalar y entregar obra', 'Registrar fecha de entrega', 'Recibir pago final'],
+    title: '7. Entrega e Instalación',
+    description: 'Paso final: verificación de la obra civil en sitio, control de calidad, despacho e instalación, formalización de la entrega y seguimiento post-venta al cliente con entrega de manuales.',
+    checklist: [
+      'Verificación de la obra (obra civil terminada y en condiciones)',
+      'Control de calidad despacho e instalación (formato diligenciado)',
+      'Formalización de la entrega (formato de entrega de obra y fecha)',
+      'Seguimiento al cliente (entrega de manual de mantenimiento tableros y herrajes)'
+    ],
     exitRequires: ['delivery']
   }
 };
@@ -135,6 +147,7 @@ function computeStageStatesOnTransition(prevStates, from, to, userEmail, notes) 
   }
   return states;
 }
+
 function missingExitRequirements(from, project, notes) {
   const p = project || {};
   const hasQuotation = !!(p.quotationId || p.quotationRef);
@@ -159,7 +172,9 @@ function missingExitRequirements(from, project, notes) {
       if (!p.insumosRequested) return ['insumosRequested: solicita los insumos (etapa 5)'];
       return [];
     case 'produccion':
-      if (!(p.productionNotes && String(p.productionNotes).trim())) return ['productionNotes: registra la fabricacion (etapa 6)'];
+      if (!((p.productionNotes && String(p.productionNotes).trim()) || p.workshopCompletionDone)) {
+        return ['productionNotes: registra el avance o finalización de la fabricación (etapa 6)'];
+      }
       return [];
     case 'instalacion':
       return [];

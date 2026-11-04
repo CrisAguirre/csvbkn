@@ -107,6 +107,44 @@ const projectSchema = z.object({
   designerDocumentSent: z.boolean().optional().nullable(),
   materialsOrderReady: z.boolean().optional().nullable(),
   materialsChecklistDone: z.boolean().optional().nullable(),
+
+  // Etapa 6 Fabricación / Producción (según fabricacion y entrega.md de fábrica)
+  contractPlansSigned: z.boolean().optional().nullable(),
+  contractSigned: z.boolean().optional().nullable(),
+  appliancesConfirmed: z.boolean().optional().nullable(),
+  appliancesNotes: z.string().optional().nullable(),
+  orderMelamines: z.boolean().optional().nullable(),
+  orderEdges: z.boolean().optional().nullable(),
+  orderFittings: z.boolean().optional().nullable(),
+  orderCountertop: z.boolean().optional().nullable(),
+  orderEstimatedArrival: z.string().optional().nullable(),
+  orderFollowupNotes: z.string().optional().nullable(),
+  targetDeliveryDate: z.string().optional().nullable(),
+  measurementsRectificationDate: z.string().optional().nullable(),
+  mepPlansReady: z.boolean().optional().nullable(),
+  cuttingListScheduled: z.boolean().optional().nullable(),
+  productionTasksScheduled: z.boolean().optional().nullable(),
+  estimatedCompletionDate: z.string().optional().nullable(),
+  mepPlansVerifiedOnSite: z.boolean().optional().nullable(),
+  rectificationNotes: z.string().optional().nullable(),
+  cutAndEdgePlansDone: z.boolean().optional().nullable(),
+  assemblyPlansDone: z.boolean().optional().nullable(),
+  materialsAvailabilityVerified: z.boolean().optional().nullable(),
+  cuttingDone: z.boolean().optional().nullable(),
+  edgingDone: z.boolean().optional().nullable(),
+  assemblyDone: z.boolean().optional().nullable(),
+  fittingsInstalled: z.boolean().optional().nullable(),
+  workshopCompletionDone: z.boolean().optional().nullable(),
+
+  // Etapa 7 Entrega e Instalación (según fabricacion y entrega.md de fábrica)
+  civilWorkFinished: z.boolean().optional().nullable(),
+  civilWorkNotes: z.string().optional().nullable(),
+  qualityControlFormSigned: z.boolean().optional().nullable(),
+  qualityControlNotes: z.string().optional().nullable(),
+  deliveryFormSigned: z.boolean().optional().nullable(),
+  maintenanceManualDelivered: z.boolean().optional().nullable(),
+  customerFollowupNotes: z.string().optional().nullable(),
+
   deliveryDate: z.string().optional().nullable(),
   finalAmount: z.number().nonnegative().optional().nullable(),
   finalPaymentReceived: z.boolean().optional().nullable(),
@@ -126,17 +164,17 @@ const updateProjectStageSchema = z.object({
 
 const updateStageStateSchema = z.object({
   stage: z.enum(['inicio', 'analisis', 'presentacion', 'contratacion', 'preparacion', 'produccion', 'instalacion'], {
-    errorMap: () => ({ message: "Estado inv�lido" })
+    errorMap: () => ({ message: "Estado inválido" })
   }),
   status: z.enum(['pendiente', 'en_curso', 'completado', 'devuelto', 'bloqueado'], {
-    errorMap: () => ({ message: "Estado inv�lido" })
+    errorMap: () => ({ message: "Estado inválido" })
   }),
   notes: z.string().optional().nullable()
 });
 
 const updateProjectStepSchema = z.object({
   stage: z.enum(['inicio', 'analisis', 'presentacion', 'contratacion', 'preparacion', 'produccion', 'instalacion'], {
-    errorMap: () => ({ message: "Etapa inv�lida" })
+    errorMap: () => ({ message: "Etapa inválida" })
   }),
   substep: z.string().optional().nullable(),
   status: z.enum(['pendiente', 'en_curso', 'completado', 'bloqueado']).optional(),
