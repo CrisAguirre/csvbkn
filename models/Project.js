@@ -46,7 +46,8 @@ const projectSchema = new mongoose.Schema({
   actors: {
     asesorComercial: { type: String, default: '' },
     contadora: { type: String, default: '' },
-    operarios: { type: String, default: '' },
+    // Lista de correos: el proyecto puede tener varios operarios asignados.
+    operarios: { type: [String], default: [] },
     disenador: { type: String, default: '' },
     asesorDiseno: { type: String, default: '' }
   },

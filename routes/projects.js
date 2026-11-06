@@ -6,10 +6,21 @@ const validate = require('../middleware/validate');
 const { projectSchema, updateProjectStageSchema, updateStageStateSchema, updateProjectStepSchema } = require('../utils/schemas');
 const { isValidTransition, missingExitRequirements, initialStageStates, computeStageStatesOnTransition, canRoleMoveStage } = require('../utils/projectFlow');
 
+function normalizeActors(actors) {
+  if (!actors || typeof actors !== 'object') return actors;
+  const normalized = { ...actors };
+  if (normalized.operarios !== undefined && normalized.operarios !== null) {
+    const raw = Array.isArray(normalized.operarios) ? normalized.operarios : [normalized.operarios];
+    normalized.operarios = [...new Set(raw.map((v) => String(v).trim()).filter(Boolean))];
+  }
+  return normalized;
+}
+
 function sanitizeProjectInput(body) {
   const data = { ...body };
   if (data.quotationId === '' || data.quotationId === undefined) delete data.quotationId;
   if (data.deliveryDate === '' || data.deliveryDate === undefined) delete data.deliveryDate;
+  if (data.actors) data.actors = normalizeActors(data.actors);
   return data;
 }
 

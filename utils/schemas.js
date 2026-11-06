@@ -75,7 +75,8 @@ const projectSchema = z.object({
   actors: z.object({
     asesorComercial: z.string().optional().nullable(),
     contadora: z.string().optional().nullable(),
-    operarios: z.string().optional().nullable(),
+    // Compatibilidad: acepta un correo (legacy) o una lista de correos.
+    operarios: z.union([z.string(), z.array(z.string())]).optional().nullable(),
     disenador: z.string().optional().nullable(),
     asesorDiseno: z.string().optional().nullable()
   }).partial().optional().nullable(),
