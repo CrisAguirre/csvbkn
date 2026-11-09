@@ -46,7 +46,7 @@ const configSchema = new mongoose.Schema({
   }],
   paymentTerms: {
     type: String,
-    default: 'ABONO INICIAL DEL 60% en efectivo, transacción o cheque al concretar la obra y aprobación de diseños.\nABONO INICIAL DEL 35% en efectivo, transacción o cheque al iniciar instalación en obra.\nPAGO SALDO: 5% restante en efectivo, a la entrega e instalación total de la obra a satisfacción.'
+    default: 'ABONO INICIAL DEL 60% en efectivo, transacción o cheque al concretar la obra y aprobación de diseños.\nSEGUNDO ABONO DEL 35% en efectivo, transacción o cheque al iniciar instalación en obra.\nPAGO SALDO: 5% restante en efectivo, a la entrega e instalación total de la obra a satisfacción.'
   },
   validityDays: {
     type: Number,

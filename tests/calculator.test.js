@@ -186,5 +186,34 @@ describe('Calculator Utils', () => {
       expect(result.totals.totalCost).toBe(100000);
       expect(result.totals.grandTotal).toBe(210630); // (100k * 1.77) * 1.19
     });
+
+    it('debe liquidar cotizaciones de diseño correctamente (clientPriceMode === "design")', () => {
+      const quotation = {
+        wizardConfig: {
+          clientPriceMode: 'design'
+        },
+        designs: [
+          { description: 'Diseño 3D Cocina', hours: 10, hourlyRate: 16780 },
+          { description: 'Planos Técnicos', hours: 5, hourlyRate: 16780 }
+        ],
+        totals: {
+          discountPercent: 10,
+          taxPercent: 19
+        }
+      };
+
+      const result = recalculateAll(quotation, mockConfig);
+
+      // Subtotal = (10 * 16780) + (5 * 16780) = 167,800 + 83,900 = 251,700
+      expect(result.totals.subtotal).toBe(251700);
+      // Descuento 10% = 25,170
+      expect(result.totals.discountAmount).toBe(25170);
+      // Base gravable = 251,700 - 25,170 = 226,530
+      // IVA 19% = 226,530 * 0.19 = 43,041 (redondeado)
+      expect(result.totals.taxAmount).toBe(43041);
+      // Total con IVA = 226,530 + 43,041 = 269,571
+      expect(result.totals.totalWithTax).toBe(269571);
+      expect(result.totals.grandTotal).toBe(269571);
+    });
   });
 });

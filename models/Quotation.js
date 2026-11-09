@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 
 const supplyItemSchema = new mongoose.Schema({
   description: { type: String, default: '' },
+  color: { type: String, default: '' },
   providerColor: { type: String, default: '' },
   dimension: { type: String, default: '' },
   unitOfMeasure: { type: String, default: 'LAMINA' },
@@ -234,6 +235,14 @@ const quotationSchema = new mongoose.Schema({
     totalWithTax: { type: Number, default: 0 }
   }],
 
+  // Ítems de cotización de diseños (clientPriceMode === 'design')
+  designs: [{
+    description: { type: String, default: '' },
+    hours: { type: Number, default: 0 },
+    hourlyRate: { type: Number, default: 0 },
+    total: { type: Number, default: 0 }
+  }],
+
   // Cálculos finales
   totals: {
     totalCost: { type: Number, default: 0 },
@@ -259,7 +268,7 @@ const quotationSchema = new mongoose.Schema({
   wizardConfig: {
     clientPriceMode: {
       type: String,
-      enum: ['unit_sqm', 'manual', 'outsource', 'products'],
+      enum: ['unit_sqm', 'manual', 'outsource', 'products', 'design'],
       default: 'unit_sqm'
     },
     hardwareDisplayMode: {

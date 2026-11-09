@@ -256,6 +256,7 @@ router.post('/', validate(quotationSchema), async (req, res) => {
       existingByNumber.markModified('totals');
       existingByNumber.markModified('wizardConfig');
       existingByNumber.markModified('products');
+      existingByNumber.markModified('designs');
       await existingByNumber.save();
       await extractAndSaveManualEntries(req.body, existingByNumber._id);
       return res.status(200).json({
@@ -333,6 +334,7 @@ router.put('/:id', validate(quotationSchema), async (req, res) => {
     quotation.markModified('totals');
     quotation.markModified('wizardConfig');
     quotation.markModified('products');
+    quotation.markModified('designs');
 
     await quotation.save();
 

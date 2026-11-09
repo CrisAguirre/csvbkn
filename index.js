@@ -115,6 +115,11 @@ async function connectDB() {
         });
         console.log('Global config seeded successfully.');
       } else {
+        if (existingConfig.paymentTerms && existingConfig.paymentTerms.includes('ABONO INICIAL DEL 35%')) {
+          existingConfig.paymentTerms = existingConfig.paymentTerms.replace(/ABONO INICIAL DEL 35%/g, 'SEGUNDO ABONO DEL 35%');
+          await existingConfig.save();
+          console.log('Migrated paymentTerms in existing global config: cuota 2 updated to SEGUNDO ABONO DEL 35%');
+        }
         console.log('Global config already exists in DB.');
       }
     } catch (configError) {
