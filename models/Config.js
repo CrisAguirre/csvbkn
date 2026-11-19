@@ -9,7 +9,7 @@ const configSchema = new mongoose.Schema({
   },
   laborRatePerHour: {
     type: Number,
-    default: 12495
+    default: 15000 // $250/minuto × 60
   },
   designRatePerHour: {
     type: Number,

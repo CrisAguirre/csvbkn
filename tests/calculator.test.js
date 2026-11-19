@@ -47,6 +47,59 @@ describe('Calculator Utils', () => {
       expect(furniture.totalCost).toBe(10000);
     });
 
+    it('debe incluir M.O. por m² con los campos persistidos (sin transitorios)', () => {
+      // valorMinuto = 12000/60 = 200
+      // minutos = (3 m² × 30 min) ÷ 3 m²/lámina = 30 → M.O. = 6000 → 2000/m²
+      const furniture = {
+        supplies: [{
+          quantity: 3, total: 0, quantityMode: 'sqm', unitPrice: 100000,
+          sqmPerSheet: 3, laborMinutes: 30
+        }]
+      };
+      calculateFurnitureTotals(furniture, mockConfig);
+      expect(furniture.supplies[0].totalPrice).toBe(306000);
+      expect(furniture.totalSupplies).toBe(306000);
+    });
+
+    it('debe aceptar el respaldo legacy _sqmPerSheet/_laborMinutes', () => {
+      const furniture = {
+        supplies: [{
+          quantity: 3, total: 0, quantityMode: 'sqm', unitPrice: 100000,
+          _sqmPerSheet: 3, _laborMinutes: 30
+        }]
+      };
+      calculateFurnitureTotals(furniture, mockConfig);
+      expect(furniture.totalSupplies).toBe(306000);
+    });
+
+    it('no reprecia un insumo histórico aunque cambie la tarifa global', () => {
+      // effectiveUnitPrice = 150000 ya incluía la M.O. acordada; la tarifa sube
+      // a 24000/h (400/min) pero el precio congelado debe mandar.
+      const furniture = {
+        supplies: [{
+          quantity: 3, total: 0, quantityMode: 'sqm', unitPrice: 100000,
+          sqmPerSheet: 3, laborMinutes: 30, effectiveUnitPrice: 150000
+        }]
+      };
+      calculateFurnitureTotals(furniture, { ...mockConfig, laborRatePerHour: 24000 });
+      expect(furniture.supplies[0].totalPrice).toBe(450000);
+      expect(furniture.supplies[0].effectiveUnitPrice).toBe(150000);
+    });
+
+    it('congela el precio calculado para recálculos posteriores', () => {
+      const supply = {
+        quantity: 3, total: 0, quantityMode: 'sqm', unitPrice: 100000,
+        sqmPerSheet: 3, laborMinutes: 30
+      };
+      const furniture = { supplies: [supply] };
+      calculateFurnitureTotals(furniture, mockConfig);
+      expect(supply.effectiveUnitPrice).toBe(102000);
+
+      calculateFurnitureTotals(furniture, { ...mockConfig, laborRatePerHour: 24000 });
+      expect(supply.totalPrice).toBe(306000);
+      expect(supply.effectiveUnitPrice).toBe(102000);
+    });
+
     it('debe calcular cantos con desperdicio', () => {
       // 10 ML -> factor 0.20 -> desperdicio 2 -> total 12 ML
       // precio = 12 * 1000 = 12000 ; M.O. = 12 ML × 3 min × valorMinuto (12000/60=2000) = 3600
@@ -58,6 +111,16 @@ describe('Calculator Utils', () => {
       expect(furniture.edgeBands[0].moTotal).toBe(7200);
       expect(furniture.totalEdgeBands).toBe(19200); // 12000 material + 7200 M.O.
       expect(furniture.totalCost).toBe(19200);
+    });
+
+    it('usa el valor del minuto congelado en cantos históricos', () => {
+      // 12 ML × 3 min × 100 = 3600, aunque la tarifa global suba a 400/min.
+      const furniture = {
+        edgeBands: [{ quantity: 10, unitPrice: 1000, moMinutesPerMl: 3, valorMinuto: 100 }]
+      };
+      calculateFurnitureTotals(furniture, { ...mockConfig, laborRatePerHour: 24000 });
+      expect(furniture.edgeBands[0].moTotal).toBe(3600);
+      expect(furniture.totalEdgeBands).toBe(15600);
     });
 
     it('debe calcular mesones correctamente', () => {

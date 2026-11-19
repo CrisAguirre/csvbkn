@@ -4,6 +4,12 @@ const mongoose = require('mongoose');
 
 const supplyItemSchema = new mongoose.Schema({
   description: { type: String, default: '' },
+  // Identidad estable del material: la marca y el color forman parte del precio,
+  // por eso se persisten y no se derivan de campos transitorios de la UI.
+  brand: { type: String, default: '' },
+  provider: { type: String, default: '' },
+  materialId: { type: String, default: '' },
+  materialCode: { type: String, default: '' },
   color: { type: String, default: '' },
   providerColor: { type: String, default: '' },
   dimension: { type: String, default: '' },
@@ -13,8 +19,16 @@ const supplyItemSchema = new mongoose.Schema({
   total: { type: Number, default: 0 },
   unitPrice: { type: Number, default: 0 },
   totalPrice: { type: Number, default: 0 },
+  // Base de calculo de mano de obra por m2 (antes viajaba en _sqmPerSheet/_laborMinutes
+  // y se perdia al guardar, lo que cambiaba el precio al reabrir la cotizacion).
+  sqmPerSheet: { type: Number, default: 0 },
+  laborMinutes: { type: Number, default: 0 },
   _laborMinutes: { type: Number, default: 0 },
-  _sqmPerSheet: { type: Number, default: 0 }
+  _sqmPerSheet: { type: Number, default: 0 },
+  // Precio unitario efectivo congelado (material + mano de obra por m2).
+  // Si es > 0, manda sobre el unitPrice: preserva cotizaciones historicas
+  // ante cambios globales de precio (ej. paso de M.O. de 12495 a 250 por minuto).
+  effectiveUnitPrice: { type: Number, default: 0 }
 }, { _id: false });
 
 const edgeBandItemSchema = new mongoose.Schema({
@@ -31,7 +45,10 @@ const edgeBandItemSchema = new mongoose.Schema({
   tipo: { type: String, default: '' },
   rigidez: { type: String, default: '' },
   moMinutesPerMl: { type: Number, default: 3 },
-  moTotal: { type: Number, default: 0 }
+  moTotal: { type: Number, default: 0 },
+  // Valor del minuto congelado al guardar. Si es > 0, se usa en vez de la tarifa
+  // global, para no repreciar cantos historicos cuando cambie la M.O.
+  valorMinuto: { type: Number, default: 0 }
 }, { _id: false });
 
 const accessoryItemSchema = new mongoose.Schema({
@@ -322,6 +339,27 @@ const quotationSchema = new mongoose.Schema({
     default: 'nuevo',
     index: true
   },
+  // Punto de inflexión: primera presentación al cliente. A partir de aquí la
+  // cotización queda cerrada para no-admin y toda edición de admin crea una
+  // versión nueva con fecha y usuario (sin duplicar la cotización).
+  presentedAt: { type: Date, default: null, index: true },
+  presentedBy: { type: String, default: '' },
+  version: { type: Number, default: 1 },
+  versionHistory: [{
+    version: { type: Number, required: true },
+    changedAt: { type: Date, default: Date.now },
+    changedBy: { type: String, default: '' },
+    changedByEmail: { type: String, default: '' },
+    reason: { type: String, default: '' },
+    snapshot: { type: mongoose.Schema.Types.Mixed, default: null }
+  }],
+  // Auditoría de la fusión (nunca se imprime en el PDF).
+  mergedFrom: [{
+    quotationId: { type: mongoose.Schema.Types.ObjectId, ref: 'Quotation', default: null },
+    number: { type: Number, default: 0 },
+    date: { type: Date, default: null },
+    clientName: { type: String, default: '' }
+  }],
   paymentTerms: { type: String, default: '' },
   validityDays: { type: Number, default: 3 },
   notes: { type: String, default: '' },

@@ -1,7 +1,8 @@
 # agents.md — Cotizador Spazio Vitale · Backend + Frontend (csvbkn / cotizadorspaziovitale)
 
 > Documento de contexto para agentes IA. Proyecto: **Cotizador Spazio Vitale** (muebles / mesones COMPAC, melamina, tableros, tapacantos, mano de obra).
-> Última verificación: 2026-11-19, con `node_modules` instalados. Backend: jest 2 suites / 19 tests (la suite propia `tests/calculator.test.js` tiene 10; el resto proviene de la copia git-excluded en `.kilo/worktrees/cerulean-raja`) + eslint 0. Frontend: tsc app+spec 0, `ng build --configuration development` y `npm run build` OK sin exceder presupuestos, karma 25/25 SUCCESS, Playwright de Proyectos (multiselect y equipo responsable) OK.
+> Última verificación: 2026-11-19, con `node_modules` instalados. Backend: jest 6 suites / 34 tests propios + eslint 0. Frontend: tsc app+spec 0, `npm run build` OK sin exceder presupuestos, karma 28/28 SUCCESS, Playwright de Proyectos (multiselect y equipo responsable) OK.
+> Cambio 2026-11-19 (integridad de precio en insumos): la marca y el color de la melamina se persisten en `SupplyItem` (`brand`, `provider`, `color`, `materialId`, `materialCode`) y la base de M.O. por m² pasó de transitoria (`_sqmPerSheet`/`_laborMinutes`, borradas al guardar) a persistida (`sqmPerSheet`/`laborMinutes`). El calculador usa los campos persistidos con respaldo legacy. Se reconstruye el selector al reabrir (`hydrateSupplyItems`) y ya no se cambia de variante en silencio si el color/marca no existe. Además, `loadQuotation()` dejó de recalcular al leer y `saveQuotation()` no re-guarda una cotización sin cambios. Verificado: jest 23 tests, eslint 0, tsc 0, build prod sin warnings, karma 25/25.
 > Cambio 2026-11-19 (Proyectos / UI + multiselect):
 > 1. `actors.operarios` es **lista de correos** (`[String]`): el backend acepta string legacy o arreglo y normaliza (trim, sin vacíos, deduplicado); el frontend lo expone con `app-multi-select` en “Nuevo proyecto” y en el panel “Equipo responsable” del detalle.
 > 2. `MultiSelectComponent` reutilizable (chips + buscador + panel desplegable) corregido para no cerrarse al seleccionar (`trackByValue` + `event.composedPath()`); `operariosOptions` combina usuarios `diseno` y `admin`.
@@ -293,3 +294,63 @@ npm run test:e2e
 
 - Backend: JWT 8h cookie httpOnly secure sameSite:none OK; `authMiddleware` acepta cookie o Bearer OK; `requireAdmin` OK; quotations global-read + owner-write + admin-delete OK; temporals owner-check robusto a populate (`_id?.toString()||toString()`) OK; `quotationSchema` permisivo + `recalculateAll` OK; seeds destructivos documentados OK; hallazgos: CORS abierto + sin rate-limit (ver Fin).
 - Frontend: `authGuard` localStorage + `roleGuard` expectedRole OK; interceptor solo `withCredentials` a backend propio OK + 401→login OK; `canEdit()` por email + `isAdmin()` por role OK cosmético; wizard `isReadOnly` + copia de temporal ajeno OK; specs con mock AuthService OK 24/24.
+
+## 19. Backup y restauración (Fase 0, 2026-11-19)
+
+- `scripts/backup.js`: exporta todas las colecciones a NDJSON en EJSON (preserva `ObjectId`, `Date`, `Decimal128`), guarda los **índices** de cada colección, comprime con gzip y cifra con **AES-256-GCM**. Genera `manifest.json` con conteo, `ndjsonSha256`, `idsSha256` e índices por colección, más el SHA-256 del archivo.
+- `scripts/restore.js`: `--dry-run` descifra y compara contra el manifiesto sin escribir; sin flag restaura (exige `--yes`, rechaza la misma base de origen), recrea índices y revalida conteos y `_id`. Nunca restaurar sobre `spaziovitale` sin orden explícita.
+- La clave del backup **no** se guarda en la carpeta ni en el repo: en esta máquina está en `C:\Users\USUARIO\AppData\Local\Temp\opencode\spaziovitale-backup-key.txt`; moverla a un gestor de contraseñas. Sin la clave el backup es irrecuperable.
+- `.env` local creado con `MONGODB_URI` de producción (ya en `.gitignore`); no commitear ni compartir.
+- Backup verificado 2026-11-19_1252: 10 colecciones / 1764 documentos / 0.11 MB, SHA-256 `78eb4e1acf...`. Restauración probada en `spaziovitale_verificacion` (conteos, `_id` e índices OK) y base de prueba eliminada.
+- Hallazgos de datos para las siguientes fases: `Config.laborRatePerHour=12495` → 208.25/min (no 250); 46 cotizaciones (43 `nuevo`, 2 `aceptada`, 1 `borrador`), todas `clientPriceMode=manual`; 27/46 con `paymentTerms` "ABONO INICIAL DEL 35%"; 36 con `hardwareDisplayMode=table`; 415 herrajes con precio guardado; 147 insumos y **0 con marca persistida** (la marca histórica no es recuperable de forma fiable, solo cruzando el catálogo de materiales); 0 con `presentedAt`. Existe una colección vacía `_diag_tmp_quotations` (artefacto de diagnóstico, sin datos).
+- Nota técnica: no usar `for await` sobre un `Transform` propio para NDJSON; el iterador del stream devuelve el búfer acumulado completo, no cada `push`. Usar `readline` o `readable.read(size)`.
+
+## 20. Fix marca/color de melamina y estabilidad de precio (2026-11-19)
+
+Causa raíz confirmada:
+
+- `applySupplyMaterial()` escribía el **proveedor** en `providerColor` y nunca `color` ni la marca; `SupplyItem` no tenía `brand` y Mongoose descartaba el campo en silencio.
+- `_sqmPerSheet`/`_laborMinutes` son transitorios: `sanitizeQuotation()` (front) y `stripTransientKeys()` (back) los borran al guardar. Al reabrir, la mano de obra por m² desaparecía y el total bajaba.
+- `resolveSupplyMaterial()` devolvía `filtered[0]`: si la marca/color elegida no existía, cambiaba de variante (y de precio) sin avisar.
+
+Cambios aplicados:
+
+- `models/Quotation.js`: `supplyItemSchema` con `brand`, `provider`, `materialId`, `materialCode`, `color`, `sqmPerSheet`, `laborMinutes`.
+- `utils/calculator.js` y `quotation-calculator.service.ts`: usan `sqmPerSheet`/`laborMinutes` persistidos; los `_` quedan como respaldo legacy.
+- Wizard: `applySupplyMaterial()` persiste identidad y base de M.O.; `hydrateSupplyItems()` reconstruye `_lamina/_colorGroup/_brand/_materialLabel` al abrir; `brandsFor()` filtra marcas por color; `resolveSupplyMaterial()` no reasigna si la combinación no existe en el catálogo.
+- Tests: `tests/calculator.test.js` (M.O. con campos persistidos + respaldo legacy) y `tests/quotation-schema.test.js` (round-trip del esquema y documentos legacy).
+
+> Cambio 2026-11-19 (Fases 2–4 del plan de 8 necesidades): `presentedAt`/versionado con edición solo admin, redacción de precios de herrajes para no-admin en API/PDF/pantalla, minuto de M.O. a 250 (config + 53 LaborTime), botón Restablecer, fusión de cotizaciones (7 días, solo admin) y texto “Segundo Abono del 35%” en 27 cotizaciones. Verificado: jest 34 tests, eslint 0, tsc 0, build OK, karma 28/28. **Sin commits ni push.**
+
+## 21. Snapshot de precio por ítem (2026-11-19)
+
+Para que **editar** una cotización antigua no reprecie ítems no tocados (y para poder subir la M.O. a 250 sin afectar históricos):
+
+- `supplyItemSchema.effectiveUnitPrice`: precio unitario efectivo congelado (material + M.O./m²). Si es > 0, manda sobre `unitPrice` en `calculator.js` y en `quotation-calculator.service.ts`. Se calcula la primera vez y se persiste.
+- `edgeBandItemSchema.valorMinuto`: valor del minuto congelado del canto; se usa en vez de la tarifa global si es > 0.
+- El wizard deriva estos valores al abrir (`hydrateSupplyItems`): `effectiveUnitPrice = totalPrice / qty` y `valorMinuto = moTotal / (total × moMinutesPerMl)`. No inventa datos: solo conserva el precio ya acordado.
+- Se invalidan explícitamente al cambiar de material (`applySupplyMaterial`, `applyEdgeMaterial`) o al editar precio/modalidad (`onSupplyPriceChange`, `onSupplyModeChange`), para que esos ítems sí se recalculen con la tarifa vigente.
+- Tests: 4 nuevos casos en `tests/calculator.test.js` (precio congelado, persistencia entre recálculos, canto con tarifa congelada) y schema de Mongoose. Verificado: jest 27 tests, eslint 0, tsc app+spec 0, build prod OK, karma 28/28.
+
+## 22. Presentación, versionado, herrajes, 250, reset y fusión (2026-11-19)
+
+**Presentación y versionado** (`models/Quotation.js`, `routes/quotations.js`, `utils/quotation-versioning.js`):
+- `presentedAt`, `presentedBy`, `version`, `versionHistory[{version,changedAt,changedBy,changedByEmail,reason,snapshot}]`.
+- `POST /api/quotations/:id/present` (dueño o admin) marca el punto de inflexión. Pasar a estado `enviada` también lo marca.
+- PUT / POST-upsert: si `presentedAt` existe, los no-admin reciben 403; un admin edita y `recordVersion()` guarda la versión anterior **en el mismo documento** (nunca duplica). El payload no puede falsificar `presentedAt/version/versionHistory`.
+- La copia (`/duplicate`) nace como borrador sin presentación ni historial. Front: badge `vN · presentada`, botón 📤, `canEdit()` y `checkReadOnly()` respetan `presentedAt`.
+
+**Herrajes sin precios para no-admin** (`utils/hardware-redaction.js`):
+- `GET /:id`, respuestas de POST/PUT/duplicate/present redactan `unitPrice/totalPrice/laborRate/totalWithTax` de `accessories` para no-admin.
+- El servidor captura y restaura las bases de precio antes de `recalculateAll`, para que editar cantidades como no-admin no destruya precios.
+- PDF: columna “Total” y “Subtotal Herrajes” solo para admin. Pantalla: `—` en vez de precio; el dropdown “Tabla separada con precios” solo para admin (si una cotización vieja la traía, se conmuta a `included`). Panel “Herrajes por mueble” con proveedor y marca para todos.
+
+**Minuto a 250**: `scripts/set-labor-rate-250.js --apply` ejecutado en producción: `Config.laborRatePerHour 12495 → 15000` y 53 `LaborTime.valorMinuto 208.25 → 250` (idempotente, verificado en second run). Defaults de `Config.js` e `index.js` actualizados a 15000. Cotizaciones históricas intactas gracias al snapshot por ítem.
+
+**Restablecer** (wizard): `captureInitialState()` al abrir/crear (incluye paso del wizard) y `resetChanges()` restaura el estado, rehidrata y vuelve al paso inicial (nuevas → paso 1). Botón “↺ Restablecer cambios” en la barra de acciones.
+
+**Fusión** (`utils/quotation-merge.js`): `GET /:id/merge-candidates` (solo admin) lista cotizaciones del mismo cliente en ±7 días; `POST /:id/merge` crea UNA cotización consolidada con nuevo número, agrupando áreas/muebles y sumando cantidades e ítems, con `mergedFrom` para auditoría. Los números de origen NO van en `notes` (que sí se imprime en el PDF). Front: botón 🔗 + modal con `app-multi-select`.
+
+**Condiciones comerciales**: `scripts/fix-payment-terms.js --apply` corrigió 27 cotizaciones de “ABONO INICIAL DEL 35%” a “Segundo Abono del 35%”, sin tocar totales. La config global ya tenía el texto nuevo desde 2026-11-09.
+
+Pendiente conocido: las 46 cotizaciones históricas no tienen `sqmPerSheet`/`laborMinutes` ni marca/color. Desde el 2026-11-19 la **lectura está congelada**: `loadQuotation()` ya no llama a `recalculate()`, `loadConfig()` no sobrescribe porcentajes ni totales de una cotización con `_id`, `nextStep()` recalcula solo si hay cambios reales (`recalculateIfChanged`), `initialSnapshot` detecta cambios reales y `saveQuotation()` no re-guarda una cotización sin cambios; `buildMOActivities()` ya no rellena `minutes/valorMinuto` al leer. Verificado contra producción: las 46 cotizaciones tienen `totals` completos (ninguna con `grandTotal` 0), así que se muestran tal cual se guardaron. Riesgo remanente: al **editar** una cotización histórica con insumos por m² (119 de 139 sin base de M.O.), el recálculo explícito aún puede repreciar ítems no tocados; se cierra con el snapshot por cotización (config + totales) en la siguiente fase. No se inventaron marcas.

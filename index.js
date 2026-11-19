@@ -98,7 +98,7 @@ async function connectDB() {
       if (!existingConfig) {
         await Config.create({
           key: 'global',
-          laborRatePerHour: 12495,
+          laborRatePerHour: 15000, // $250/minuto × 60
           designRatePerHour: 16780,
           unforeseenPercent: 10,
           profitPercent: 35,

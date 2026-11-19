@@ -112,11 +112,24 @@ function calculateFurnitureTotals(furniture, config) {
       const qty = s.total > 0 ? s.total : (s.quantity || 0);
       let effectiveUnitPrice = s.unitPrice || 0;
 
-      if (s.quantityMode === 'sqm' && (s._sqmPerSheet || 0) > 0 && (s._laborMinutes || 0) > 0) {
-        const minutes = (qty * (s._laborMinutes || 0)) / (s._sqmPerSheet || 1);
-        const laborCost = minutes * valorMinuto;
-        const laborPerSqm = qty > 0 ? laborCost / qty : 0;
-        effectiveUnitPrice = effectiveUnitPrice + laborPerSqm;
+      // Si ya hay precio efectivo congelado, manda: es el precio acordado en la
+      // cotizacion guardada. Evita repreciar históricos al cambiar tarifas globales
+      // (p.ej. M.O. a 250) o al editar otro ítem de la misma cotización.
+      const frozenUnitPrice = s.effectiveUnitPrice || 0;
+      if (frozenUnitPrice <= 0) {
+        // Campos persistidos primero; los transitorios quedan como respaldo legacy.
+        const sqmPerSheet = (s.sqmPerSheet || 0) > 0 ? s.sqmPerSheet : (s._sqmPerSheet || 0);
+        const laborMinutes = (s.laborMinutes || 0) > 0 ? s.laborMinutes : (s._laborMinutes || 0);
+
+        if (s.quantityMode === 'sqm' && sqmPerSheet > 0 && laborMinutes > 0) {
+          const minutes = (qty * laborMinutes) / sqmPerSheet;
+          const laborCost = minutes * valorMinuto;
+          const laborPerSqm = qty > 0 ? laborCost / qty : 0;
+          effectiveUnitPrice = effectiveUnitPrice + laborPerSqm;
+        }
+        s.effectiveUnitPrice = effectiveUnitPrice;
+      } else {
+        effectiveUnitPrice = frozenUnitPrice;
       }
 
       s.totalPrice = qty * effectiveUnitPrice;
@@ -133,7 +146,10 @@ function calculateFurnitureTotals(furniture, config) {
       e.waste = (e.quantity || 0) * factor;
       e.total = (e.quantity || 0) + e.waste;
       const materialCost = e.total * (e.unitPrice || 0);
-      const moCosto = e.total * (e.moMinutesPerMl || 3) * valorMinuto;
+      // Congelamos el valor del minuto usado en la cotización guardada.
+      const edgeValorMinuto = (e.valorMinuto || 0) > 0 ? e.valorMinuto : valorMinuto;
+      const moCosto = e.total * (e.moMinutesPerMl || 3) * edgeValorMinuto;
+      e.valorMinuto = edgeValorMinuto;
       e.moTotal = moCosto;
       e.totalPrice = materialCost + moCosto;
       furniture.totalEdgeBands += e.totalPrice;
