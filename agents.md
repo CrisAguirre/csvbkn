@@ -327,8 +327,8 @@ Cambios aplicados:
 **Estado correcto = el de ayer en la tarde.** La tarde del 19 se eliminaron herrajes intencionalmente (17 en 261425, 22 en 261428, 22 en 2614212, etc.) y se agregaron otros (conector LED, touch, fuente 12V 20A en 261421…). La copia `safe/backup.ndjson.gz.enc` (12:53 del 19) es **anterior** a esos cambios y no es fuente de verdad.
 
 - Copia `safe/antes-reparacion-2026-11-20\` (14:59 del 20, SHA-256 `2c0feaf1…`): captura exactamente el estado de ayer en la tarde. Es la referencia para las 26142*.
-- Error corregido: `scripts/restore-hardware-26142.js` había reintroducido 119 herrajes borrados ayer desde la copia de las 12:53. **No volver a ejecutarlo.**
-- `scripts/revert-hardware-repair.js` revirtió esos 13 documentos desde la copia de las 14:59. Verificado: **15/15 cotizaciones 26142\* idénticas** a esa copia en herrajes, precios, totales y modo.
+- Estado final (aclarado por el usuario): los herrajes que faltaban se **perdieron por el fallo de la app**, no fueron borrados intencionalmente. Por eso se ejecutó `scripts/restore-hardware-26142.js`: recupera los 119 herrajes de la copia de las 12:53 **conservando** los herrajes nuevos que se agregaron ayer en la tarde (verificado: 261421 tiene conector LED, touch y fuente 12V 20A; 261422 tiene fuente 20A y vidrio bronce 0.45×2.15). `scripts/revert-hardware-repair.js` es el revert temporal que se deshizo; **no ejecutarlo**.
+- Verificado: 15/15 cotizaciones 26142* con sus herrajes y precios, y todos los totales recalculados (ej. 261428: 28 herrajes, total 29.117.568).
 - El paso 4 (Presupuesto) conserva su código original: tabla de herrajes con precios, sumados al total por `recalculateAll`. El modo `hardwareDisplayMode` afecta **solo** al PDF.
 - PDF alterno para admin: `PdfGeneratorService.generateHardwarePricesPdf()` clona la cotización y fuerza `hardwareDisplayMode='table'` sin mutar el documento; botones 📄💲 en el listado y “PDF herrajes con precios” en el wizard.
 
