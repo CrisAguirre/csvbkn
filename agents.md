@@ -322,14 +322,15 @@ Cambios aplicados:
 
 > Cambio 2026-11-19 (Fases 2–4 del plan de 8 necesidades): `presentedAt`/versionado con edición solo admin, redacción de precios de herrajes para no-admin en API/PDF/pantalla, minuto de M.O. a 250 (config + 53 LaborTime), botón Restablecer, fusión de cotizaciones (7 días, solo admin) y texto “Segundo Abono del 35%” en 27 cotizaciones. Verificado: jest 34 tests, eslint 0, tsc 0, build OK, karma 29/29. **Sin commits ni push.**
 
-## 23. Reparación de herrajes 26142* y PDF alterno (2026-11-20)
+## 23. Herrajes 26142*: estado final y PDF alterno (2026-11-20)
 
-Problema: después de los cambios del 19, las cotizaciones 26142* quedaron sin precios en el paso 4 y varias perdieron herrajes. Diagnóstico comparando el backup `safe/backup.ndjson.gz.enc` (12:53 del 19) contra producción: 119 herrajes faltaban en 13 cotizaciones; las cotizaciones nuevas de ayer (2614225) y los ítems agregados después de las 12:53 se conservaron.
+**Estado correcto = el de ayer en la tarde.** La tarde del 19 se eliminaron herrajes intencionalmente (17 en 261425, 22 en 261428, 22 en 2614212, etc.) y se agregaron otros (conector LED, touch, fuente 12V 20A en 261421…). La copia `safe/backup.ndjson.gz.enc` (12:53 del 19) es **anterior** a esos cambios y no es fuente de verdad.
 
-- Backup previo a la reparación: `C:\Users\USUARIO\Desktop\safe\antes-reparacion-2026-11-20\` (1764→1773 docs, SHA-256 `2c0feaf1…`).
-- `scripts/restore-hardware-26142.js`: lee el backup cifrado, empareja por área + mueble + descripción, agrega SOLO los herrajes ausentes, recalcula esa cotización con la config vigente y guarda con Mongoose. Idempotente (segunda pasada: 0 pendientes). **No toca** `hardwareDisplayMode`, `presentedAt` ni versiones. Aplicado: 13 cotizaciones / 119 herrajes. 261429 (sin faltantes) quedó intacta.
-- Verificado: las 15 cotizaciones 26142* tienen otra vez todos sus herrajes con precio y totales coherentes (ej. 261428: 28 herrajes, grandTotal 21.588.436 → 29.117.568).
-- PDF alterno para admin: `PdfGeneratorService.generateHardwarePricesPdf()` clona la cotización y fuerza `hardwareDisplayMode='table'` sin mutar el documento; botones 📄💲 en el listado y “PDF herrajes con precios” en el wizard. El modo guardado sigue affectando **solo** al PDF normal.
+- Copia `safe/antes-reparacion-2026-11-20\` (14:59 del 20, SHA-256 `2c0feaf1…`): captura exactamente el estado de ayer en la tarde. Es la referencia para las 26142*.
+- Error corregido: `scripts/restore-hardware-26142.js` había reintroducido 119 herrajes borrados ayer desde la copia de las 12:53. **No volver a ejecutarlo.**
+- `scripts/revert-hardware-repair.js` revirtió esos 13 documentos desde la copia de las 14:59. Verificado: **15/15 cotizaciones 26142\* idénticas** a esa copia en herrajes, precios, totales y modo.
+- El paso 4 (Presupuesto) conserva su código original: tabla de herrajes con precios, sumados al total por `recalculateAll`. El modo `hardwareDisplayMode` afecta **solo** al PDF.
+- PDF alterno para admin: `PdfGeneratorService.generateHardwarePricesPdf()` clona la cotización y fuerza `hardwareDisplayMode='table'` sin mutar el documento; botones 📄💲 en el listado y “PDF herrajes con precios” en el wizard.
 
 ## 21. Snapshot de precio por ítem (2026-11-19)
 
