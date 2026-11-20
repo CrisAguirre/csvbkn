@@ -1,7 +1,7 @@
 # agents.md — Cotizador Spazio Vitale · Backend + Frontend (csvbkn / cotizadorspaziovitale)
 
 > Documento de contexto para agentes IA. Proyecto: **Cotizador Spazio Vitale** (muebles / mesones COMPAC, melamina, tableros, tapacantos, mano de obra).
-> Última verificación: 2026-11-19, con `node_modules` instalados. Backend: jest 6 suites / 34 tests propios + eslint 0. Frontend: tsc app+spec 0, `npm run build` OK sin exceder presupuestos, karma 29/29 SUCCESS, Playwright de Proyectos (multiselect y equipo responsable) OK.
+> Última verificación: 2026-11-20, con `node_modules` instalados. Backend: jest 6 suites / 34 tests propios + eslint 0. Frontend: tsc app+spec 0, `npm run build` OK sin exceder presupuestos, karma 29/29 SUCCESS, Playwright de Proyectos (multiselect y equipo responsable) OK.
 > Cambio 2026-11-19 (integridad de precio en insumos): la marca y el color de la melamina se persisten en `SupplyItem` (`brand`, `provider`, `color`, `materialId`, `materialCode`) y la base de M.O. por m² pasó de transitoria (`_sqmPerSheet`/`_laborMinutes`, borradas al guardar) a persistida (`sqmPerSheet`/`laborMinutes`). El calculador usa los campos persistidos con respaldo legacy. Se reconstruye el selector al reabrir (`hydrateSupplyItems`) y ya no se cambia de variante en silencio si el color/marca no existe. Además, `loadQuotation()` dejó de recalcular al leer y `saveQuotation()` no re-guarda una cotización sin cambios. Verificado: jest 23 tests, eslint 0, tsc 0, build prod sin warnings, karma 25/25.
 > Cambio 2026-11-19 (Proyectos / UI + multiselect):
 > 1. `actors.operarios` es **lista de correos** (`[String]`): el backend acepta string legacy o arreglo y normaliza (trim, sin vacíos, deduplicado); el frontend lo expone con `app-multi-select` en “Nuevo proyecto” y en el panel “Equipo responsable” del detalle.
@@ -322,6 +322,15 @@ Cambios aplicados:
 
 > Cambio 2026-11-19 (Fases 2–4 del plan de 8 necesidades): `presentedAt`/versionado con edición solo admin, redacción de precios de herrajes para no-admin en API/PDF/pantalla, minuto de M.O. a 250 (config + 53 LaborTime), botón Restablecer, fusión de cotizaciones (7 días, solo admin) y texto “Segundo Abono del 35%” en 27 cotizaciones. Verificado: jest 34 tests, eslint 0, tsc 0, build OK, karma 29/29. **Sin commits ni push.**
 
+## 23. Reparación de herrajes 26142* y PDF alterno (2026-11-20)
+
+Problema: después de los cambios del 19, las cotizaciones 26142* quedaron sin precios en el paso 4 y varias perdieron herrajes. Diagnóstico comparando el backup `safe/backup.ndjson.gz.enc` (12:53 del 19) contra producción: 119 herrajes faltaban en 13 cotizaciones; las cotizaciones nuevas de ayer (2614225) y los ítems agregados después de las 12:53 se conservaron.
+
+- Backup previo a la reparación: `C:\Users\USUARIO\Desktop\safe\antes-reparacion-2026-11-20\` (1764→1773 docs, SHA-256 `2c0feaf1…`).
+- `scripts/restore-hardware-26142.js`: lee el backup cifrado, empareja por área + mueble + descripción, agrega SOLO los herrajes ausentes, recalcula esa cotización con la config vigente y guarda con Mongoose. Idempotente (segunda pasada: 0 pendientes). **No toca** `hardwareDisplayMode`, `presentedAt` ni versiones. Aplicado: 13 cotizaciones / 119 herrajes. 261429 (sin faltantes) quedó intacta.
+- Verificado: las 15 cotizaciones 26142* tienen otra vez todos sus herrajes con precio y totales coherentes (ej. 261428: 28 herrajes, grandTotal 21.588.436 → 29.117.568).
+- PDF alterno para admin: `PdfGeneratorService.generateHardwarePricesPdf()` clona la cotización y fuerza `hardwareDisplayMode='table'` sin mutar el documento; botones 📄💲 en el listado y “PDF herrajes con precios” en el wizard. El modo guardado sigue affectando **solo** al PDF normal.
+
 ## 21. Snapshot de precio por ítem (2026-11-19)
 
 Para que **editar** una cotización antigua no reprecie ítems no tocados (y para poder subir la M.O. a 250 sin afectar históricos):
@@ -344,7 +353,7 @@ Para que **editar** una cotización antigua no reprecie ítems no tocados (y par
 - `GET /:id`, respuestas de POST/PUT/duplicate/present redactan `unitPrice/totalPrice/laborRate/totalWithTax` de `accessories` para no-admin.
 - El servidor captura y restaura las bases de precio antes de `recalculateAll`, para que editar cantidades como no-admin no destruya precios.
 - PDF: columna “Total” y “Subtotal Herrajes” solo para admin. El dropdown “Tabla separada con precios” solo para admin (si una cotización vieja la traía, se conmuta a `included`).
-- **Aclaración 2026-11-19 (rol, NO modo):** el dropdown `hardwareDisplayMode` del paso 3 afecta **únicamente al PDF**. El paso 4 (Presupuesto) no depende del modo: la visibilidad de precios de herrajes es por **rol** (`canSeeHardwarePrices` = admin). Para no-admin se eliminan las columnas “Precio unitario”, “Total” y “Flete +5%” y la línea “Accesorios: $”; el backend ya redacta esos valores en la API. `isStepValid(4)` no exige precio de herrajes a no-admin (no puede verlos ni editarlos). No acoplar el paso 4 al modo del PDF: fue un intento corregido y revertido. Tests: 29/29 karma.
+- **Aclaración final 2026-11-19:** el dropdown `hardwareDisplayMode` del paso 3 afecta **únicamente al PDF**. El **paso 4 (Presupuesto) NO se modificó**: se restauró byte a byte desde `e3bb7e4` (tabla de herrajes original, columnas de precio y línea “Accesorios: $” intactas, `isStepValid(4)` original). `canSeeHardwarePrices` solo se usa en el panel “Herrajes por mueble” del paso 3. Los intentos de acoplar el paso 4 al modo o al rol fueron revertidos a petición del usuario. Tests: 29/29 karma.
 
 **Minuto a 250**: `scripts/set-labor-rate-250.js --apply` ejecutado en producción: `Config.laborRatePerHour 12495 → 15000` y 53 `LaborTime.valorMinuto 208.25 → 250` (idempotente, verificado en second run). Defaults de `Config.js` e `index.js` actualizados a 15000. Cotizaciones históricas intactas gracias al snapshot por ítem.
 
