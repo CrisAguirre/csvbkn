@@ -322,6 +322,16 @@ Cambios aplicados:
 
 > Cambio 2026-11-19 (Fases 2–4 del plan de 8 necesidades): `presentedAt`/versionado con edición solo admin, redacción de precios de herrajes para no-admin en API/PDF/pantalla, minuto de M.O. a 250 (config + 53 LaborTime), botón Restablecer, fusión de cotizaciones (7 días, solo admin) y texto “Segundo Abono del 35%” en 27 cotizaciones. Verificado: jest 34 tests, eslint 0, tsc 0, build OK, karma 29/29. **Sin commits ni push.**
 
+## 24. Permisología uniforme de cotizaciones (2026-11-20)
+
+Todos los usuarios autenticados (admin, comercial, contabilidad, diseno) tienen **los mismos permisos y visibilidad** sobre cotizaciones y sus borradores:
+
+- Backend `routes/quotations.js`: eliminados `requireAdmin` de `PATCH /:id/status`, `GET/POST /merge`, `DELETE /:id`; eliminadas las restricciones por `createdBy` y por `presentedAt` en POST-upsert, PUT y `/present`; eliminada la redacción de herrajes en **todas** las respuestas; eliminado `captureHardwareBases/restoreHardwareBases` (ya no hay precios redactados que conservar). El versionado de cotizaciones presentadas se aplica igual para cualquier rol.
+- Backend `routes/temporals.js`: cualquier usuario puede actualizar y borrar cualquier borrador (`/all/cleanup` sigue siendo admin, es limpieza global, no una cotización).
+- Frontend: `isAdmin()` y `canEdit()` del listado siempre `true` (se conservan los métodos porque la plantilla los usa); `canSeeHardwarePrices` del wizard siempre `true`; `onHardwareModeChange()` sin restricción; `checkReadOnly()` siempre `false`; `loadTemporal()` retoma cualquier borrador; `sanitizeQuotation()` ya no elimina `accessories`; `PdfGeneratorService.canShowHardwarePrices` siempre `true`. La opción "Tabla separada con precios" y el PDF alterno están disponibles para todos.
+- Nota: `roleGuard` sigue en `price-list`, `settings` y `activity` (no son interfaces de cotizaciones). El paso 4 sigue con su código original.
+- Tests: `quotation-wizard-save.spec.ts` actualizado (todos los roles ven precios y pueden editar). Verificado: jest 34, eslint 0, tsc app+spec 0, build OK, karma 29/29.
+
 ## 23. Herrajes 26142*: estado final y PDF alterno (2026-11-20)
 
 **Estado correcto = el de ayer en la tarde.** La tarde del 19 se eliminaron herrajes intencionalmente (17 en 261425, 22 en 261428, 22 en 2614212, etc.) y se agregaron otros (conector LED, touch, fuente 12V 20A en 261421…). La copia `safe/backup.ndjson.gz.enc` (12:53 del 19) es **anterior** a esos cambios y no es fuente de verdad.

@@ -36,13 +36,9 @@ router.post('/', authMiddleware, async (req, res) => {
     const { _id, clientName, currentStepName, currentStepNumber, data } = req.body;
     
     if (_id && _id !== 'new') {
-      // Intentar actualizar: solo dueño o admin (los legacy sin creador los puede tomar cualquiera)
+      // Cualquier usuario puede actualizar un borrador, igual que un administrador.
       const existing = await Temporal.findById(_id);
       if (existing) {
-        const ownerId = existing.createdBy?._id?.toString?.() || existing.createdBy?.toString?.();
-        if (ownerId && ownerId !== req.user.id && req.user.role !== 'admin') {
-          return res.status(403).json({ success: false, message: 'No tiene permisos para editar este temporal de otro usuario. Duplíquelo como cotización si lo necesita.' });
-        }
         existing.clientName = clientName ?? existing.clientName;
         existing.currentStepName = currentStepName ?? existing.currentStepName;
         existing.currentStepNumber = currentStepNumber ?? existing.currentStepNumber;
@@ -83,16 +79,12 @@ router.delete('/all/cleanup', authMiddleware, requireAdmin, async (req, res) => 
   }
 });
 
-// Eliminar una cotización temporal (solo dueño o admin; legacy sin autor lo puede borrar cualquiera autenticado)
+// Eliminar una cotización temporal (todos los usuarios con la misma permisología)
 router.delete('/:id', authMiddleware, async (req, res) => {
   try {
     const temporal = await Temporal.findById(req.params.id);
     if (!temporal) {
       return res.status(404).json({ success: false, message: 'Temporal no encontrado' });
-    }
-    const ownerId = temporal.createdBy?._id?.toString?.() || temporal.createdBy?.toString?.();
-    if (ownerId && ownerId !== req.user.id && req.user.role !== 'admin') {
-      return res.status(403).json({ success: false, message: 'No tiene permisos para eliminar este temporal de otro usuario.' });
     }
     await temporal.deleteOne();
     res.json({ success: true, message: 'Temporal eliminado' });

@@ -3,10 +3,11 @@ const router = express.Router();
 const Quotation = require('../models/Quotation');
 const ManualEntry = require('../models/ManualEntry');
 const Config = require('../models/Config');
-const { authMiddleware, requireAdmin } = require('../middleware/auth');
+const { authMiddleware } = require('../middleware/auth');
 const { recalculateAll } = require('../utils/calculator');
 const { isPresented, recordVersion } = require('../utils/quotation-versioning');
-const { redactHardwarePrices, captureHardwareBases, restoreHardwareBases } = require('../utils/hardware-redaction');
+// Todos los usuarios autenticados ven y editan cotizaciones con los mismos
+// permisos: no se redactan precios de herrajes ni se restringe por dueño/rol.
 const { compatibleCandidates, mergeQuotations, WINDOW_DAYS } = require('../utils/quotation-merge');
 const logger = require('../utils/logger');
 const validate = require('../middleware/validate');
@@ -205,9 +206,7 @@ router.get('/:id', async (req, res) => {
     if (!quotation) {
       return res.status(404).json({ success: false, message: 'Cotización no encontrada.' });
     }
-    // Los herrajes no exponen precios a no-admin (afecta también al PDF).
-    const data = req.user.role === 'admin' ? quotation : redactHardwarePrices(quotation);
-    res.json({ success: true, data });
+    res.json({ success: true, data: quotation });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -250,14 +249,7 @@ router.post('/', validate(quotationSchema), async (req, res) => {
     // UPSERT: si ya existe una cotizacion con ese numero, sobrescribirla
     const existingByNumber = await Quotation.findOne({ number: finalNumber });
     if (existingByNumber) {
-      if (req.user.role !== 'admin' && existingByNumber.createdBy.toString() !== req.user.id) {
-        return res.status(403).json({ success: false, message: 'Ya existe la cotizacion No.' + finalNumber + ' de otro usuario.' });
-      }
-      if (isPresented(existingByNumber) && req.user.role !== 'admin') {
-        return res.status(403).json({ success: false, message: 'La cotización ya fue presentada al cliente. Solo un administrador puede editarla.' });
-      }
       if (isPresented(existingByNumber)) recordVersion(existingByNumber, req.user, 'Edición de cotización presentada');
-      const hardwareBases = req.user.role === 'admin' ? null : captureHardwareBases(existingByNumber);
       const updateData = { ...req.body, number: finalNumber };
       delete updateData.createdBy;
       delete updateData.createdByEmail;
@@ -265,7 +257,6 @@ router.post('/', validate(quotationSchema), async (req, res) => {
       delete updateData.createdAt;
       delete updateData.updatedAt;
       existingByNumber.set(updateData);
-      restoreHardwareBases(existingByNumber, hardwareBases);
       const cfg2 = config || await Config.findOne({ key: 'global' });
       if (cfg2) recalculateAll(existingByNumber, cfg2);
       existingByNumber.markModified('areas');
@@ -277,7 +268,7 @@ router.post('/', validate(quotationSchema), async (req, res) => {
       await extractAndSaveManualEntries(req.body, existingByNumber._id);
       return res.status(200).json({
         success: true,
-        data: req.user.role === 'admin' ? existingByNumber : redactHardwarePrices(existingByNumber),
+        data: existingByNumber,
         message: `Cotizacion No.${finalNumber} sobrescrita exitosamente.`
       });
     }
@@ -301,7 +292,7 @@ router.post('/', validate(quotationSchema), async (req, res) => {
 
     res.status(201).json({
       success: true,
-      data: req.user.role === 'admin' ? quotation : redactHardwarePrices(quotation),
+      data: quotation,
       message: `Cotización No.${quotation.number} creada exitosamente.`
     });
   } catch (error) {
@@ -318,22 +309,9 @@ router.put('/:id', validate(quotationSchema), async (req, res) => {
       return res.status(404).json({ success: false, message: 'Cotización no encontrada.' });
     }
 
-    // Presentada al cliente: queda cerrada; solo admin puede editarla y cada
-    // edición genera una versión nueva con fecha y usuario.
-    if (isPresented(quotation) && req.user.role !== 'admin') {
-      return res.status(403).json({ success: false, message: 'La cotización ya fue presentada al cliente. Solo un administrador puede editarla.' });
-    }
-    // Roles no-admin solo pueden editar borradores propios
-    if (req.user.role !== 'admin') {
-      if (quotation.createdBy.toString() !== req.user.id) {
-        return res.status(403).json({ success: false, message: 'No tiene permisos para editar esta cotización.' });
-      }
-      if (quotation.status !== 'borrador' && quotation.status !== 'nuevo') {
-        return res.status(400).json({ success: false, message: 'Solo se pueden editar cotizaciones en estado borrador o nuevo.' });
-      }
-    }
+    // Presentada al cliente: cada edición genera una versión nueva con fecha
+    // y usuario, sin importar el rol.
     if (isPresented(quotation)) recordVersion(quotation, req.user, 'Edición de cotización presentada');
-    const hardwareBases = req.user.role === 'admin' ? null : captureHardwareBases(quotation);
 
     const updateData = { ...req.body };
     normalizeQuotation(updateData);
@@ -346,7 +324,6 @@ router.put('/:id', validate(quotationSchema), async (req, res) => {
     delete updateData.updatedAt;
 
     quotation.set(updateData);
-    restoreHardwareBases(quotation, hardwareBases);
 
     // Forzar cálculo seguro en el backend
     const config = await Config.findOne({ key: 'global' });
@@ -367,7 +344,7 @@ router.put('/:id', validate(quotationSchema), async (req, res) => {
 
     res.json({
       success: true,
-      data: req.user.role === 'admin' ? quotation : redactHardwarePrices(quotation),
+      data: quotation,
       message: 'Cotización actualizada exitosamente.'
     });
   } catch (error) {
@@ -376,8 +353,8 @@ router.put('/:id', validate(quotationSchema), async (req, res) => {
   }
 });
 
-// PATCH /api/quotations/:id/status - Cambiar estado (solo admin)
-router.patch('/:id/status', requireAdmin, validate(updateQuotationStatusSchema), async (req, res) => {
+// PATCH /api/quotations/:id/status - Cambiar estado (todos los usuarios)
+router.patch('/:id/status', validate(updateQuotationStatusSchema), async (req, res) => {
   try {
     const { status } = req.body;
     const validStatuses = [
@@ -410,8 +387,8 @@ router.patch('/:id/status', requireAdmin, validate(updateQuotationStatusSchema),
   }
 });
 
-// GET /api/quotations/:id/merge-candidates - Cotizaciones compatibles para fusionar (solo admin)
-router.get('/:id/merge-candidates', requireAdmin, async (req, res) => {
+// GET /api/quotations/:id/merge-candidates - Cotizaciones compatibles para fusionar
+router.get('/:id/merge-candidates', async (req, res) => {
   try {
     const target = await Quotation.findById(req.params.id).select('number date client.name');
     if (!target) {
@@ -442,8 +419,8 @@ router.get('/:id/merge-candidates', requireAdmin, async (req, res) => {
   }
 });
 
-// POST /api/quotations/:id/merge - Fusionar cotizaciones del mismo cliente (solo admin)
-router.post('/:id/merge', requireAdmin, async (req, res) => {
+// POST /api/quotations/:id/merge - Fusionar cotizaciones del mismo cliente
+router.post('/:id/merge', async (req, res) => {
   try {
     const target = await Quotation.findById(req.params.id);
     if (!target) {
@@ -498,9 +475,6 @@ router.post('/:id/present', async (req, res) => {
     if (!quotation) {
       return res.status(404).json({ success: false, message: 'Cotización no encontrada.' });
     }
-    if (req.user.role !== 'admin' && quotation.createdBy.toString() !== req.user.id) {
-      return res.status(403).json({ success: false, message: 'No tiene permisos para presentar esta cotización.' });
-    }
     if (!isPresented(quotation)) {
       quotation.presentedAt = new Date();
       quotation.presentedBy = req.user.email || '';
@@ -508,7 +482,7 @@ router.post('/:id/present', async (req, res) => {
     }
     res.json({
       success: true,
-      data: req.user.role === 'admin' ? quotation : redactHardwarePrices(quotation),
+      data: quotation,
       message: isPresented(quotation)
         ? `Cotización No.${quotation.number} marcada como presentada.`
         : `Cotización No.${quotation.number} ya estaba presentada.`
@@ -554,7 +528,7 @@ router.post('/:id/duplicate', async (req, res) => {
 
     res.status(201).json({
       success: true,
-      data: req.user.role === 'admin' ? duplicate : redactHardwarePrices(duplicate),
+      data: duplicate,
       message: `Cotización duplicada como No.${duplicate.number}.`
     });
   } catch (error) {
@@ -562,8 +536,8 @@ router.post('/:id/duplicate', async (req, res) => {
   }
 });
 
-// DELETE /api/quotations/:id - Eliminar cotización (solo admin)
-router.delete('/:id', requireAdmin, async (req, res) => {
+// DELETE /api/quotations/:id - Eliminar cotización (todos los usuarios)
+router.delete('/:id', async (req, res) => {
   try {
     const quotation = await Quotation.findByIdAndDelete(req.params.id);
     if (!quotation) {
