@@ -1,7 +1,7 @@
 # agents.md — Cotizador Spazio Vitale · Backend + Frontend (csvbkn / cotizadorspaziovitale)
 
 > Documento de contexto para agentes IA. Proyecto: **Cotizador Spazio Vitale** (muebles / mesones COMPAC, melamina, tableros, tapacantos, mano de obra).
-> Última verificación: 2026-11-20, con `node_modules` instalados. Backend: jest 6 suites / 34 tests propios + eslint 0. Frontend: tsc app+spec 0, `npm run build` OK sin exceder presupuestos, karma 29/29 SUCCESS, Playwright de Proyectos (multiselect y equipo responsable) OK.
+> Última verificación: 2026-11-20, con `node_modules` instalados. Backend: jest 6 suites / 34 tests propios + eslint 0. Frontend: tsc app+spec 0, `npm run build` OK sin exceder presupuestos, karma 31/31 SUCCESS, Playwright de Proyectos (multiselect y equipo responsable) OK.
 > Cambio 2026-11-19 (integridad de precio en insumos): la marca y el color de la melamina se persisten en `SupplyItem` (`brand`, `provider`, `color`, `materialId`, `materialCode`) y la base de M.O. por m² pasó de transitoria (`_sqmPerSheet`/`_laborMinutes`, borradas al guardar) a persistida (`sqmPerSheet`/`laborMinutes`). El calculador usa los campos persistidos con respaldo legacy. Se reconstruye el selector al reabrir (`hydrateSupplyItems`) y ya no se cambia de variante en silencio si el color/marca no existe. Además, `loadQuotation()` dejó de recalcular al leer y `saveQuotation()` no re-guarda una cotización sin cambios. Verificado: jest 23 tests, eslint 0, tsc 0, build prod sin warnings, karma 25/25.
 > Cambio 2026-11-19 (Proyectos / UI + multiselect):
 > 1. `actors.operarios` es **lista de correos** (`[String]`): el backend acepta string legacy o arreglo y normaliza (trim, sin vacíos, deduplicado); el frontend lo expone con `app-multi-select` en “Nuevo proyecto” y en el panel “Equipo responsable” del detalle.
@@ -321,6 +321,15 @@ Cambios aplicados:
 - Tests: `tests/calculator.test.js` (M.O. con campos persistidos + respaldo legacy) y `tests/quotation-schema.test.js` (round-trip del esquema y documentos legacy).
 
 > Cambio 2026-11-19 (Fases 2–4 del plan de 8 necesidades): `presentedAt`/versionado con edición solo admin, redacción de precios de herrajes para no-admin en API/PDF/pantalla, minuto de M.O. a 250 (config + 53 LaborTime), botón Restablecer, fusión de cotizaciones (7 días, solo admin) y texto “Segundo Abono del 35%” en 27 cotizaciones. Verificado: jest 34 tests, eslint 0, tsc 0, build OK, karma 29/29. **Sin commits ni push.**
+
+## 25. Liquidación de mesones en PDF y vista (2026-11-20)
+
+El PDF tomaba `furn.totalCost × markupFactor` (costo **con transporte**), sin aplicar el valor final con IVA ni el metraje. Corrección:
+
+- `pdf-generator.service.ts`: para `furn.type === 'meson'`, `unitPrice = finalPricePerMl × areaSqm` y `total = finalPricePerMl × areaSqm × quantity`. Helper `mesonFinalPricePerMl()` usa `md.finalPricePerMl` o, en documentos legacy, recalcula `baseCost → subtotal → taxAmount` con los porcentajes guardados.
+- `quotation-view.component.ts`: el precio cliente del mesón usa la misma fórmula (antes devolvía `totalBudget` sin cantidad).
+- El backend y el wizard ya calculaban `finalPricePerMl` y `totalBudget` correctamente; no se cambiaron.
+- Tests: `pdf-meson.spec.ts` (valor final por ML, total con ML×cantidad y fallback legacy). karma 31/31.
 
 ## 24. Permisología uniforme de cotizaciones (2026-11-20)
 
